@@ -8,7 +8,8 @@
 //   * The engine polls the page (evaluateToVariant -> "javascriptDone" event), runs each
 //     request with full IPC access, and sends replies/events back via __ptbSend().
 
-var PTB = {
+// Keep live transport state when engine.js is hot-reloaded (pt reload).
+var PTB = (typeof PTB !== "undefined" && PTB && PTB.view) ? PTB : {
   view: null, watched: {}, pollId: null, lastPoll: 0, state: "", injected: false,
   debugVisible: false,        // true = keep the bridge web view on screen (debugging)
   pollMs: 25,
@@ -304,3 +305,179 @@ function unwatchTerm(name) {
   delete PTB.watched[name];
   return true;
 }
+
+// ======================================================================================
+// v0.2 API: configuration, reliable CLI execution, PCs, activities, files.
+// enterCommand() writes its output synchronously, so exec() can return a transcript.
+// ======================================================================================
+
+var CONSOLE_TYPES = { 0: 1, 1: 1, 16: 1, 17: 1, 27: 1 };   // IOS devices (router/switch/L3/ASA)
+var HOST_TYPES = { 8: 1, 9: 1, 18: 1, 19: 1, 20: 1, 21: 1, 22: 1, 12: 1, 10: 1 }; // pc/server/laptop/…
+
+function captureOutput(tl, fn) {
+  var buf = [];
+  var cb = function (src, args) {
+    for (var k in args) if (typeof args[k] === "string") { buf.push(args[k]); break; }
+  };
+  tl.registerEvent("outputWritten", null, cb);
+  try { fn(); } finally { safe(function () { tl.unregisterEvent("outputWritten", null, cb); }, null); }
+  return buf.join("");
+}
+
+var MORE = /--More--\s*$/;
+
+function extend(target, src) { for (var k in src) target[k] = src[k]; }
+
+extend(ptb, {
+  // Run commands on a device's console and return the full transcript.
+  // Pages through --More-- automatically. Output that arrives later (ping, boot) is streamed
+  // as {event:"term"}; the daemon's /exec waits for it when `pending` is true.
+  exec: function (name, commands) {
+    var tl = dev(name).getCommandLine();
+    if (!tl) throw new Error(name + " has no command line");
+    var cmds = Array.isArray(commands) ? commands : [commands];
+    var out = "";
+    for (var i = 0; i < cmds.length; i++) {
+      out += captureOutput(tl, function () { tl.enterCommand(String(cmds[i])); });
+      for (var guard = 0; MORE.test(out) && guard < 500; guard++) {
+        out += captureOutput(tl, function () { tl.enterChar(32, 0); });
+      }
+    }
+    var prompt = String(tl.getPrompt() || "");
+    var tail = out.replace(/\s+$/, "");
+    return { output: out, prompt: prompt, mode: String(tl.getMode() || ""),
+             pending: !!prompt && tail.slice(-prompt.trim().length) !== prompt.trim() };
+  },
+
+  // Send a raw key: " " (page), "\t" (complete), "\x03" (Ctrl+C), "up"/"down"/"left"/"right".
+  key: function (name, k) {
+    var tl = dev(name).getCommandLine();
+    var arrows = { right: 1, left: 2, up: 3, down: 4 };
+    return captureOutput(tl, function () {
+      if (arrows[k]) tl.enterChar(0, arrows[k]);
+      else tl.enterChar(String(k).charCodeAt(0), 0);
+    });
+  },
+
+  // Get an IOS device past "initial configuration dialog" / "Press RETURN" into user EXEC.
+  ready: function (name) {
+    var d = dev(name), tl = d.getCommandLine(), out = "";
+    safe(function () { d.skipBoot(); }, null);
+    for (var i = 0; i < 6; i++) {
+      var p = String(tl.getPrompt() || "");
+      if (/yes\/no/i.test(p)) out += captureOutput(tl, function () { tl.enterCommand("no"); });
+      else if (/[>#]\s*$/.test(p)) break;
+      else out += captureOutput(tl, function () { tl.enterCommand(""); });
+    }
+    return { prompt: String(tl.getPrompt() || ""), output: out };
+  },
+
+  // Enter global config, run commands, leave. Returns transcript.
+  configure: function (name, commands) {
+    ptb.ready(name);
+    var pre = [], p = String(dev(name).getCommandLine().getPrompt() || "");
+    if (/>\s*$/.test(p)) pre.push("enable");
+    if (!/\(config/.test(p)) pre.push("configure terminal");
+    return ptb.exec(name, pre.concat(commands, ["end"]));
+  },
+
+  runningConfig: function (name) {
+    ptb.ready(name);
+    var p = String(dev(name).getCommandLine().getPrompt() || "");
+    var cmds = [];
+    if (/\(config/.test(p)) cmds.push("end");
+    if (/>\s*$/.test(p)) cmds.push("enable");
+    cmds.push("show running-config");
+    var out = ptb.exec(name, cmds).output;
+    var i = out.indexOf("Building configuration");
+    return (i >= 0 ? out.slice(i) : out).replace(/ ?--More-- ?/g, "").replace(/\x08+/g, "");
+  },
+
+  saveConfig: function (name) { ptb.ready(name); return ptb.exec(name, ["enable", "copy running-config startup-config", ""]).output; },
+
+  // Everything a UI or agent needs to know about one device.
+  device: function (name) {
+    var d = dev(name), ports = [];
+    for (var j = 0; j < d.getPortCount(); j++) {
+      var p = d.getPortAt(j), info = portInfo(p);
+      info.gateway = safe(function () { return String(p.getDefaultGateway()); }, null);
+      info.dhcp = safe(function () { return p.isDhcpClientOn(); }, null);
+      info.description = safe(function () { return p.getDescription(); }, null);
+      ports.push(info);
+    }
+    var t = d.getType();
+    return {
+      name: d.getName(), model: d.getModel(), type: t, power: d.getPower(),
+      kind: CONSOLE_TYPES[t] ? "ios" : (HOST_TYPES[t] ? "host" : "other"),
+      hostname: safe(function () { return d.getHostName(); }, null),
+      gateway: safe(function () { return String(d.getProcess("HostIpProcess").getDefaultGateway()); }, null),
+      dns: safe(function () { return String(d.getProcess("DnsClient").getServerIp()); }, null),
+      prompt: safe(function () { return String(d.getCommandLine().getPrompt()); }, null),
+      ports: ports
+    };
+  },
+
+  // PC / server / laptop IP settings (Desktop > IP Configuration in PT).
+  hostIp: function (name, opts) {
+    var d = dev(name), port = d.getPort(opts.port || "FastEthernet0") || d.getPortAt(0);
+    if (opts.dhcp) { port.setDhcpClientFlag(true); return true; }
+    port.setDhcpClientFlag(false);
+    if (opts.ip) port.setIpSubnetMask(opts.ip, opts.mask || "255.255.255.0");
+    if (opts.gateway !== undefined && opts.gateway !== null) {
+      var gw = String(opts.gateway) || "0.0.0.0";
+      safe(function () { d.getProcess("HostIpProcess").setDefaultGateway(gw); }, null);
+      safe(function () { port.setDefaultGateway(gw); }, null);
+    }
+    if (opts.dns !== undefined && opts.dns !== null) {
+      var dns = String(opts.dns) || "0.0.0.0";
+      safe(function () { d.getProcess("DnsClient").setServerIp(dns); }, null);
+      safe(function () { port.setDnsServerIp(dns); }, null);
+    }
+    return true;
+  },
+
+  power: function (name, on) { dev(name).setPower(!!on); return !!on; },
+
+  // Canvas notes/labels: labs often put the addressing plan here.
+  notes: function () {
+    var w = lw(), ids = safe(function () { return w.getCanvasNoteIds(); }, []) || [], out = [];
+    for (var i = 0; i < ids.length; i++) {
+      var id = ids[i];
+      out.push({ text: String(safe(function () { return w.getCanvasNoteText(id); }, "")),
+                 x: safe(function () { return w.getCanvasItemRealX(id); }, null), y: safe(function () { return w.getCanvasItemRealY(id); }, null) });
+    }
+    return out;
+  },
+
+  // Activity (.pka): instructions are readable; the score may need the activity password.
+  activity: function () {
+    var f = ipc.appWindow().getActiveFile();
+    if (!f || !safe(function () { return f.isActivityFile(); }, false)) return { isActivity: false };
+    var n = safe(function () { return f.getInstructionCount(); }, 0), pages = [];
+    for (var i = 0; i < n; i++) pages.push(String(safe(function () { return f.getInstruction(i); }, "")));
+    var score = null, err = null;
+    try { score = { percent: f.getPercentageComplete(), items: f.getAssessmentItemsCount(), correct: f.getCorrectAssessmentItemsCount() }; }
+    catch (e) { err = String(e && e.message ? e.message : e); }
+    return { isActivity: true, instructions: pages, score: score, scoreError: err,
+             timeElapsed: safe(function () { return f.getTimeElapsed(); }, null) };
+  },
+
+  // Hot reload: re-evaluate engine.js from disk without restarting the module.
+  reload: function () {
+    var root = (typeof __recpt !== "undefined" && __recpt.root) ? __recpt.root
+      : ipc.appWindow().getUserFolder() + "/extensions/reCPT/";
+    var saved = PTB;
+    (0, eval)(String(ipc.systemFileManager().getFileContents(root + "engine.js")));
+    PTB = saved;
+    return "reloaded " + Object.keys(ptb).length + " api functions";
+  },
+
+  openDialog: function () {
+    var p = ipc.systemFileManager().getOpenFileName("Open with reCPT", ipc.appWindow().getUserFolder() + "/saves", "Packet Tracer (*.pkt *.pka)");
+    return p ? String(p) : null;
+  },
+  saveDialog: function () {
+    var p = ipc.systemFileManager().getSaveFileName("Save with reCPT", ipc.appWindow().getUserFolder() + "/saves", "Packet Tracer (*.pkt *.pka)");
+    return p ? String(p) : null;
+  }
+});

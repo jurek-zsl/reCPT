@@ -21,6 +21,39 @@ decryption.
               └───────────┘  └──────────────────────────────┘
 ```
 
+## Features (v0.2)
+
+**UI** (`npm run daemon`, then open http://127.0.0.1:39150):
+- **Canvas:** drag and drop devices, zoom and pan, live link state. Click a cable to select it; <kbd>Del</kbd> disconnects it.
+- **Routers and switches:**
+  - **CLI tab:** a real console with `--More--` paging, Ctrl+C and history.
+  - **Config tab:** hostname, an interface table (IP/mask/up), a paste-config box, the running-config viewer and "save to startup".
+  - **Ports tab:** cable from any free port.
+- **PCs, laptops and servers:**
+  - **Desktop tab:** IP configuration (static/DHCP, gateway, DNS).
+  - **Prompt tab:** the command prompt (ping, ipconfig, …).
+- **Device actions:** rename, power on/off, delete.
+- **Activities (.pka):** the instructions drawer. The score is shown when PT allows it.
+- **Files:** New / Open / Save / Save as (⌘O, ⌘S), and a ⌘K command palette.
+
+**AI agents (MCP).** The repo ships `.mcp.json`, so Claude Code opened in this folder offers the
+`recpt` server automatically. For other folders or clients:
+
+```bash
+claude mcp add recpt -- node /path/to/reCPT/mcp/server.mjs
+```
+
+The tools:
+
+| Purpose | Tools |
+|---|---|
+| Read the lab | `recpt_status`, `recpt_activity`, `recpt_topology`, `recpt_notes`, `recpt_device` |
+| Run commands and configure | `recpt_exec` (waits for ping), `recpt_configure`, `recpt_running_config`, `recpt_save_config`, `recpt_set_host_ip` |
+| Edit the network | `recpt_add_device`, `recpt_remove_device`, `recpt_link`, `recpt_unlink`, `recpt_power` |
+| Files | `recpt_file` |
+
+Then ask Claude: *"read the activity in Packet Tracer and configure it, verify with pings"*.
+
 ## Status (tested against PT 9.0.1.0858 on macOS, arm64)
 
 | | |
@@ -50,6 +83,7 @@ agent/loader.js    source of the loader baked into agent/reCPT.pts
 agent/reCPT.pts    loader Script Module (encrypted by PT; built once in PT's GUI)
 agent/bridge.htm   placeholder custom interface the web view loads
 setup/install.mjs  installer (npm run setup / --dry-run / --uninstall)
+mcp/server.mjs     MCP server for AI agents (zero dependencies, stdio)
 daemon/ptd.mjs     daemon + serves the UI, zero dependencies (Node >= 20)
 ui/index.html      reCPT UI prototype (single file, no build)
 cli/pt.mjs         CLI

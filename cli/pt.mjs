@@ -26,6 +26,13 @@ const HELP = `pt — drive Cisco Packet Tracer from the terminal
   pt open <file.pkt|pka>   pt save   pt saveas <file>   pt new
   pt hide | pt show                 hide/show the Packet Tracer window
   pt score                          activity (.pka) completion, graded by PT
+  pt exec <dev> "<cmd>" […]         run commands, wait for output (ping, show …)
+  pt config <dev> "<line>" […]      configure terminal … end on a router/switch
+  pt run <dev>                      show running-config
+  pt ip <dev> <ip> [mask] [gw] [dns] set PC/server IP (or: pt ip <dev> dhcp)
+  pt activity                       activity instructions (+ score if readable)
+  pt notes                          canvas notes (addressing plans)
+  pt reload                         hot-reload engine.js inside PT (after npm run setup)
   pt eval "<js>"                    run raw JS in PT's script engine (ipc.* available)
 `;
 
@@ -116,6 +123,18 @@ switch (cmd) {
   case "hide": out(await rpc("hide")); break;
   case "show": out(await rpc("show")); break;
   case "score": out((await rpc("score")) ?? "no activity file open"); break;
+  case "exec": {
+    const r = await fetch(`${BASE}/exec`, { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${TOKEN}` },
+      body: JSON.stringify({ device: a[0], commands: a.slice(1) }) }).then((x) => x.json());
+    if (!r.ok) die(r.error); process.stdout.write(r.result.output + "\n"); break;
+  }
+  case "config": out((await rpc("configure", [a[0], a.slice(1)])).output); break;
+  case "run": out(await rpc("runningConfig", [a[0]])); break;
+  case "ip": out(await rpc("hostIp", [a[0], a[1] === "dhcp" ? { dhcp: true } : { ip: a[1], mask: a[2], gateway: a[3], dns: a[4] }])); break;
+  case "activity": { const x = await rpc("activity"); if (!x.isActivity) { out("not an activity"); break; }
+    out(x.score ? `score ${x.score.percent}%` : `score: ${x.scoreError}`); x.instructions.forEach((h, i) => out(`--- page ${i + 1} ---\n` + h.replace(/<[^>]+>/g, "").replace(/\n{3,}/g, "\n\n").trim())); break; }
+  case "notes": for (const n of await rpc("notes")) if (n.text.trim()) out(`(${n.x},${n.y}) ${n.text.trim()}`); break;
+  case "reload": out(await rpc("reload")); break;
   case "eval": out(await rpc("__code", a.join(" "))); break;
   default: die(`unknown command "${cmd}" — try pt help`);
 }

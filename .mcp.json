@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "recpt": {
+      "command": "node",
+      "args": ["mcp/server.mjs"]
+    }
+  }
+}

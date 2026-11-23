@@ -98,9 +98,37 @@ const clients = new Set(); // event subscribers
 const pending = new Map(); // id -> {resolve, timer}
 let nextId = 1;
 
+const termTaps = new Set(); // in-daemon listeners for {event:"term"} (used by /exec)
+
 function broadcast(obj) {
   const s = typeof obj === "string" ? obj : JSON.stringify(obj);
   for (const c of clients) c.send(s);
+  if (typeof obj === "object" && obj.event === "term") for (const t of termTaps) t(obj);
+}
+
+// Run commands and wait until the device's prompt is back (ping, traceroute, boot…).
+async function execAndWait(device, commands, timeoutMs = 20000) {
+  const w = await callAgent(`ptb.watchTerm(${JSON.stringify(device)})`);
+  if (!w.ok) return w;
+  let late = "";
+  const tap = (m) => { if (m.device === device && m.data != null) late += m.data; };
+  termTaps.add(tap);
+  try {
+    const r = await callAgent(`ptb.exec(${JSON.stringify(device)}, ${JSON.stringify(commands)})`);
+    if (!r.ok || !r.result.pending) return r;
+    const prompt = r.result.prompt.trim();
+    late = ""; // events emitted during exec() arrived before its reply; drop duplicates
+    const t0 = Date.now();
+    let lastLen = -1, quietSince = Date.now();
+    while (Date.now() - t0 < timeoutMs) {
+      await new Promise((res) => setTimeout(res, 150));
+      if (late.length !== lastLen) { lastLen = late.length; quietSince = Date.now(); }
+      if (late.replace(/\s+$/, "").endsWith(prompt) && Date.now() - quietSince > 300) break;
+    }
+    r.result.output += late;
+    r.result.pending = !late.replace(/\s+$/, "").endsWith(prompt);
+    return r;
+  } finally { termTaps.delete(tap); }
 }
 
 function callAgent(code) {
@@ -154,6 +182,14 @@ const server = http.createServer(async (req, res) => {
     const code = toCode(parsed);
     if (!code) return json(400, { ok: false, error: "need {call,args} or {code}" });
     return json(200, await callAgent(code));
+  }
+  if (req.method === "POST" && url.pathname === "/exec") {
+    let body = "";
+    for await (const c of req) { body += c; if (body.length > 1e6) return json(413, { ok: false, error: "too large" }); }
+    let p; try { p = JSON.parse(body); } catch { return json(400, { ok: false, error: "bad json" }); }
+    if (typeof p.device !== "string" || !p.commands) return json(400, { ok: false, error: "need {device, commands}" });
+    const cmds = Array.isArray(p.commands) ? p.commands.map(String) : [String(p.commands)];
+    return json(200, await execAndWait(p.device, cmds, Math.min(Number(p.timeoutMs) || 20000, 120000)));
   }
   json(404, { ok: false, error: "not found" });
 });

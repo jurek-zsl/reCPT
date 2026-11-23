@@ -8,81 +8,116 @@
   :root {
     --bg: #0f1216; --panel: #161a20; --panel-2: #1c2129; --line: #262c36; --text: #e6e9ee;
     --muted: #8a93a3; --accent: #4cc2a8; --accent-2: #2f8f7b; --warn: #e5a54b; --bad: #e0685f;
-    --good: #5cc27a; --radius: 10px; --mono: ui-monospace, "SF Mono", Menlo, monospace;
+    --good: #5cc27a; --mono: ui-monospace, "SF Mono", Menlo, monospace;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; background: var(--bg); color: var(--text);
     font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif; }
   button { font: inherit; color: inherit; background: var(--panel-2); border: 1px solid var(--line);
-    border-radius: 8px; padding: 5px 10px; cursor: pointer; }
+    border-radius: 7px; padding: 4px 10px; cursor: pointer; }
   button:hover { border-color: #3a4352; }
   button.primary { background: var(--accent-2); border-color: var(--accent-2); }
-  kbd { font: 11px var(--mono); color: var(--muted); border: 1px solid var(--line); border-bottom-width: 2px;
-    border-radius: 4px; padding: 0 4px; }
+  button.danger:hover { border-color: var(--bad); color: #ffb3ad; }
+  button:disabled { opacity: .45; cursor: default; }
+  input, textarea, select { font: 12px var(--mono); color: var(--text); background: #0b0d10; border: 1px solid var(--line);
+    border-radius: 6px; padding: 5px 7px; outline: none; }
+  input:focus, textarea:focus { border-color: var(--accent-2); }
+  kbd { font: 11px var(--mono); color: var(--muted); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; }
+  .muted { color: var(--muted); }
 
-  .app { display: grid; height: 100%; grid-template: 48px 1fr / 210px 1fr 340px; }
-  header { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; padding: 0 14px;
+  .app { display: grid; height: 100%; grid-template: 48px 1fr / 200px 1fr minmax(380px, 34vw); }
+  header { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; padding: 0 12px;
     border-bottom: 1px solid var(--line); background: var(--panel); }
-  .brand { font-weight: 700; letter-spacing: .3px; }
+  .brand { font-weight: 700; letter-spacing: .3px; margin-right: 4px; }
   .brand span { color: var(--accent); }
   .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 99px;
-    background: var(--panel-2); border: 1px solid var(--line); color: var(--muted); font-size: 12px; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bad); }
-  .dot.on { background: var(--good); box-shadow: 0 0 0 3px #5cc27a22; }
-  .file { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40vw; }
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bad); flex: none; }
+  .dot.on { background: var(--good); }
+  .file { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
   .spacer { flex: 1; }
+  .sep { width: 1px; height: 22px; background: var(--line); }
 
-  aside.palette { border-right: 1px solid var(--line); background: var(--panel); padding: 12px; overflow: auto; }
+  aside.palette { border-right: 1px solid var(--line); background: var(--panel); padding: 10px; overflow: auto; }
   .section { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .8px; margin: 6px 0 8px; }
-  .tile { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; cursor: grab;
-    border: 1px solid transparent; user-select: none; }
+  .tile { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 8px; cursor: grab; border: 1px solid transparent; user-select: none; }
   .tile:hover { background: var(--panel-2); border-color: var(--line); }
-  .tile svg { flex: none; }
   .tile small { display: block; color: var(--muted); font-size: 11px; }
-  .hint { color: var(--muted); font-size: 12px; margin-top: 14px; line-height: 1.6; }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 14px; line-height: 1.7; }
 
   main { position: relative; overflow: hidden; }
-  #canvas { width: 100%; height: 100%; display: block; cursor: default;
-    background-image: radial-gradient(#ffffff10 1px, transparent 1px); background-size: 22px 22px; }
+  #canvas { width: 100%; height: 100%; display: block; background-image: radial-gradient(#ffffff10 1px, transparent 1px); background-size: 22px 22px; }
   #canvas.panning { cursor: grabbing; }
   .node { cursor: pointer; }
   .node rect.body { fill: var(--panel-2); stroke: var(--line); stroke-width: 1.5; }
   .node:hover rect.body { stroke: #4a5566; }
   .node.sel rect.body { stroke: var(--accent); stroke-width: 2; }
-  .node.off rect.body { opacity: .5; }
+  .node.off rect.body { opacity: .45; }
   .node text { fill: var(--text); font-size: 12px; text-anchor: middle; pointer-events: none; }
   .node text.model { fill: var(--muted); font-size: 10px; }
-  .link { stroke-width: 2; }
-  .link.up { stroke: var(--good); } .link.down { stroke: #6b3b39; stroke-dasharray: 5 4; }
+  .link { stroke-width: 2; pointer-events: none; }
+  .link.up { stroke: var(--good); } .link.down { stroke: #8a4744; stroke-dasharray: 5 4; }
+  .link.sel { stroke: var(--accent); stroke-width: 3.5; stroke-dasharray: none; }
+  .linkhit { stroke: transparent; stroke-width: 14; cursor: pointer; }
   .plabel { fill: var(--muted); font: 9.5px var(--mono); text-anchor: middle; pointer-events: none; }
-  .banner { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: var(--panel);
-    border: 1px solid var(--accent-2); border-radius: 99px; padding: 6px 14px; display: none; }
+  .banner { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--accent-2);
+    border-radius: 99px; padding: 6px 14px; display: none; white-space: nowrap; }
   .empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); pointer-events: none; }
 
-  aside.inspector { border-left: 1px solid var(--line); background: var(--panel); display: grid;
-    grid-template-rows: auto 1fr minmax(220px, 45%); min-height: 0; }
-  .insp-head { padding: 14px; border-bottom: 1px solid var(--line); }
-  .insp-head h2 { margin: 0 0 2px; font-size: 16px; }
-  .insp-head .sub { color: var(--muted); }
-  .ports { overflow: auto; padding: 8px 6px; }
-  .port { display: grid; grid-template-columns: 10px 1fr auto; gap: 8px; align-items: center; padding: 5px 8px;
-    border-radius: 6px; font: 12px var(--mono); }
+  /* activity drawer */
+  .drawer { position: absolute; top: 0; left: 0; bottom: 0; width: min(460px, 70%); background: var(--panel); border-right: 1px solid var(--line);
+    display: none; grid-template-rows: auto 1fr; z-index: 5; }
+  .drawer.open { display: grid; }
+  .drawer .head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  .drawer iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+
+  /* inspector */
+  aside.inspector { border-left: 1px solid var(--line); background: var(--panel); display: grid; grid-template-rows: auto auto 1fr; min-height: 0; min-width: 0; }
+  .insp-head { padding: 12px 14px 8px; display: grid; gap: 6px; }
+  .insp-title { display: flex; align-items: center; gap: 8px; }
+  .insp-title input { font: 600 15px -apple-system, system-ui, sans-serif; background: transparent; border-color: transparent; padding: 2px 4px; min-width: 0; flex: 1; }
+  .insp-title input:hover, .insp-title input:focus { border-color: var(--line); }
+  .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tabs { display: flex; gap: 2px; padding: 0 10px; border-bottom: 1px solid var(--line); }
+  .tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: var(--muted); padding: 8px 10px; }
+  .tabs button.on { color: var(--text); border-bottom-color: var(--accent); }
+  .pane { min-height: 0; overflow: auto; display: none; }
+  .pane.on { display: block; }
+  .pane.term-pane.on { display: grid; grid-template-rows: 1fr auto auto; }
+  .placeholder { color: var(--muted); padding: 16px 14px; }
+
+  .term { margin: 0; padding: 10px 12px; overflow: auto; font: 12px/1.45 var(--mono); white-space: pre-wrap; word-break: break-word; color: #d5e6dc; background: #0b0d10; min-height: 0; }
+  .term-line { display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: #0b0d10; border-top: 1px solid var(--line); }
+  .term-line .prompt { font: 12px var(--mono); color: var(--accent); white-space: nowrap; }
+  .term-line input { flex: 1; border: 0; background: transparent; padding: 3px 0; }
+  .term-help { padding: 4px 10px 6px; background: #0b0d10; color: var(--muted); font-size: 11px; }
+
+  .form { padding: 12px 14px; display: grid; gap: 10px; }
+  .row { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 8px; }
+  .row label { color: var(--muted); }
+  .grid-if { width: 100%; border-collapse: collapse; font: 12px var(--mono); }
+  .grid-if th { text-align: left; color: var(--muted); font: 11px -apple-system, system-ui, sans-serif; padding: 4px; border-bottom: 1px solid var(--line); }
+  .grid-if td { padding: 3px 4px; border-bottom: 1px solid #1f242c; }
+  .grid-if input { width: 100%; padding: 3px 5px; }
+  .grid-if td.name { white-space: nowrap; }
+  .toggle { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; }
+  .transcript { font: 11.5px/1.4 var(--mono); white-space: pre-wrap; background: #0b0d10; border: 1px solid var(--line); border-radius: 6px; padding: 8px; max-height: 220px; overflow: auto; }
+  .transcript .err { color: #ff9b93; }
+  textarea { width: 100%; min-height: 110px; resize: vertical; }
+  .h { font-weight: 600; margin-top: 6px; }
+  .ports { padding: 8px 6px; }
+  .port { display: grid; grid-template-columns: 10px 1fr auto; gap: 8px; align-items: center; padding: 5px 8px; border-radius: 6px; font: 12px var(--mono); }
   .port:hover { background: var(--panel-2); }
   .port .dot { width: 7px; height: 7px; }
   .port .ip { color: var(--muted); }
   .port button { padding: 1px 7px; font-size: 11px; }
-  .console { display: grid; grid-template-rows: 1fr auto; border-top: 1px solid var(--line); min-height: 0; background: #0b0d10; }
-  .console pre { margin: 0; padding: 10px; overflow: auto; font: 12px/1.45 var(--mono); white-space: pre-wrap; color: #cfe3d9; }
-  .console form { display: flex; border-top: 1px solid var(--line); }
-  .console input { flex: 1; background: transparent; border: 0; color: var(--text); padding: 9px 10px; font: 12px var(--mono); outline: none; }
-  .placeholder { color: var(--muted); padding: 14px; }
 
-  .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: #2a1716;
-    border: 1px solid var(--bad); color: #ffd9d5; padding: 8px 14px; border-radius: 8px; display: none; max-width: 70vw; }
-  .cmdk { position: fixed; inset: 0; background: #0008; display: none; place-items: start center; padding-top: 14vh; }
+  .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: #2a1716; border: 1px solid var(--bad);
+    color: #ffd9d5; padding: 8px 14px; border-radius: 8px; display: none; max-width: 70vw; z-index: 20; }
+  .toast.ok { background: #14261c; border-color: var(--good); color: #cff3da; }
+  .cmdk { position: fixed; inset: 0; background: #0008; display: none; place-items: start center; padding-top: 14vh; z-index: 30; }
   .cmdk .box { width: min(560px, 90vw); background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-  .cmdk input { width: 100%; background: transparent; border: 0; border-bottom: 1px solid var(--line); color: var(--text);
-    padding: 14px 16px; font-size: 15px; outline: none; }
+  .cmdk input { width: 100%; background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 14px 16px; font: 15px -apple-system, system-ui; }
   .cmdk ul { list-style: none; margin: 0; padding: 6px; max-height: 50vh; overflow: auto; }
   .cmdk li { padding: 8px 10px; border-radius: 6px; cursor: pointer; }
   .cmdk li.active { background: var(--panel-2); }
@@ -93,20 +128,27 @@
   <header>
     <div class="brand">re<span>CPT</span></div>
     <div class="pill"><span class="dot" id="statusDot"></span><span id="statusText">connecting…</span></div>
+    <button id="btnNew" title="New file">New</button>
+    <button id="btnOpen" title="Open .pkt / .pka">Open…</button>
+    <button id="btnSave" title="Save (⌘S)">Save</button>
+    <button id="btnSaveAs">Save as…</button>
+    <div class="sep"></div>
     <div class="file" id="fileName"></div>
+    <button id="btnActivity" style="display:none">Instructions</button>
     <div class="spacer"></div>
-    <button id="btnRefresh" title="Refresh (R)">Refresh</button>
     <button id="btnPT" title="Show or hide the Packet Tracer window">Hide PT</button>
-    <button id="btnCmd" title="Command palette">Commands <kbd>⌘K</kbd></button>
+    <button id="btnCmd" title="Command palette">⌘K</button>
   </header>
 
   <aside class="palette">
     <div class="section">Devices</div>
     <div id="tiles"></div>
     <div class="hint">
-      Drag a device onto the canvas, or click to drop it in the middle.<br>
-      <kbd>Del</kbd> remove · <kbd>⌘K</kbd> commands<br>
-      Scroll to zoom · drag empty space to pan
+      Drag onto the canvas or click.<br>
+      Click a cable to select it.<br>
+      <kbd>Del</kbd> delete selection<br>
+      <kbd>⌘K</kbd> commands · <kbd>F</kbd> fit<br>
+      Scroll zoom · drag to pan
     </div>
   </aside>
 
@@ -114,15 +156,18 @@
     <svg id="canvas"><g id="world"><g id="links"></g><g id="nodes"></g></g></svg>
     <div class="banner" id="banner"></div>
     <div class="empty" id="empty">Waiting for Packet Tracer…</div>
+    <div class="drawer" id="drawer">
+      <div class="head"><b>Instructions</b><span class="pill" id="score">score —</span><div class="spacer"></div>
+        <button id="btnPrevPage">‹</button><span id="pageNo" class="muted"></span><button id="btnNextPage">›</button>
+        <button id="btnCloseDrawer">✕</button></div>
+      <iframe id="instr" sandbox=""></iframe>
+    </div>
   </main>
 
-  <aside class="inspector">
-    <div class="insp-head" id="inspHead"><div class="placeholder">Select a device</div></div>
-    <div class="ports" id="ports"></div>
-    <div class="console">
-      <pre id="term"></pre>
-      <form id="termForm"><input id="termInput" placeholder="Select a router or switch to use its console" autocomplete="off" spellcheck="false" disabled></form>
-    </div>
+  <aside class="inspector" id="inspector">
+    <div class="insp-head" id="inspHead"><div class="placeholder">Select a device or a cable</div></div>
+    <div class="tabs" id="tabs"></div>
+    <div id="panes" style="min-height:0;display:grid"></div>
   </aside>
 </div>
 
@@ -133,6 +178,7 @@
 const TOKEN = "__PTB_TOKEN__";
 const $ = (id) => document.getElementById(id);
 const SVGNS = "http://www.w3.org/2000/svg";
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 // ---------------------------------------------------------------- data
 const PALETTE = [
@@ -140,26 +186,25 @@ const PALETTE = [
   { label: "Router", model: "2911", type: "router", kind: "router" },
   { label: "Router", model: "ISR4331", type: "router", kind: "router" },
   { label: "Switch", model: "2960-24TT", type: "switch", kind: "switch" },
+  { label: "L3 Switch", model: "3560-24PS", type: "multilayerswitch", kind: "switch" },
   { label: "PC", model: "PC-PT", type: "pc", kind: "pc" },
   { label: "Laptop", model: "Laptop-PT", type: "laptop", kind: "pc" },
   { label: "Server", model: "Server-PT", type: "server", kind: "server" },
 ];
 const KIND_BY_TYPE = { 0: "router", 1: "switch", 16: "switch", 17: "switch", 8: "pc", 18: "pc", 9: "server", 2: "cloud" };
-const CONSOLE_TYPES = new Set([0, 1, 16, 17, 27]);
-
-const state = { topo: { devices: [], links: [] }, sel: null, linkFrom: null, view: null, ptVisible: true, connected: false };
+const state = { topo: { devices: [], links: [] }, sel: null, selLink: null, linkFrom: null, view: null, userView: false,
+  ptVisible: true, activity: null, page: 0, tab: {}, dev: null };
 
 // ---------------------------------------------------------------- transport
-async function rpc(call, args = []) {
-  const r = await fetch("/rpc", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + TOKEN },
-    body: JSON.stringify({ call, args }) });
+async function rpc(call, ...args) {
+  const r = await fetch("/rpc", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + TOKEN }, body: JSON.stringify({ call, args }) });
   const j = await r.json();
   if (!j.ok) throw new Error(j.error || "error");
   return j.result;
 }
-function toast(msg) {
-  const t = $("toast"); t.textContent = msg; t.style.display = "block";
-  clearTimeout(toast.t); toast.t = setTimeout(() => (t.style.display = "none"), 4000);
+function toast(msg, ok) {
+  const t = $("toast"); t.textContent = msg; t.className = "toast" + (ok ? " ok" : ""); t.style.display = "block";
+  clearTimeout(toast.t); toast.t = setTimeout(() => (t.style.display = "none"), ok ? 1800 : 4500);
 }
 async function act(fn) { try { return await fn(); } catch (e) { toast(e.message); } }
 
@@ -169,62 +214,63 @@ function connectEvents() {
     const m = JSON.parse(e.data);
     if (m.event === "agent") { setStatus(m.connected); if (m.connected) refresh(); }
     else if (m.event === "topology") scheduleRefresh();
-    else if (m.event === "term" && state.sel && m.device === state.sel && m.data != null) termWrite(m.data);
+    else if (m.event === "term" && m.data != null) termWrite(m.device, m.data);
   };
   ws.onclose = () => { setStatus(false, "daemon offline"); setTimeout(connectEvents, 1500); };
 }
 function setStatus(on, text) {
-  state.connected = on;
   $("statusDot").classList.toggle("on", !!on);
   $("statusText").textContent = text || (on ? "connected" : "Packet Tracer not connected");
   $("empty").textContent = on ? "Empty workspace — drag a device in" : "Waiting for Packet Tracer…";
 }
 
 let refreshTimer;
-function scheduleRefresh() { clearTimeout(refreshTimer); refreshTimer = setTimeout(refresh, 120); }
+function scheduleRefresh() { clearTimeout(refreshTimer); refreshTimer = setTimeout(refresh, 150); }
 async function refresh() {
   try {
     const [info, topo] = await Promise.all([rpc("info"), rpc("topology")]);
     setStatus(true, `PT ${info.version.split(".").slice(0, 3).join(".")}`);
-    $("fileName").textContent = info.file ? info.file.split("/").pop() + (info.isActivity ? "  · activity" : "") : "untitled";
+    $("fileName").textContent = info.file ? info.file.split("/").pop() : "untitled";
+    $("btnActivity").style.display = info.isActivity ? "" : "none";
+    state.isActivity = info.isActivity;
     state.topo = topo;
-    if (!state.view) fitView();
+    if (!state.view || !state.userView) fitView();
     render();
-    if (state.sel) inspect(state.sel, true);
-  } catch (e) { setStatus(false, e.message.includes("not connected") ? null : e.message); }
+    if (state.sel && !devByName(state.sel)) select(null);
+    else if (state.sel) refreshPorts();
+    if (state.selLink && !findLink(state.selLink)) select(null);
+  } catch (e) { setStatus(false, /not connected/.test(e.message) ? null : e.message); }
 }
 
 // ---------------------------------------------------------------- canvas
 const NODE_W = 64, NODE_H = 48;
-// PT parks helper objects (e.g. Power Distribution Device) far outside the logical canvas.
 function visibleDevices() { return state.topo.devices.filter((d) => Math.abs(d.x) < 3000 && Math.abs(d.y) < 3000); }
 function devByName(n) { return state.topo.devices.find((d) => d.name === n); }
 function center(d) { return { x: d.x + NODE_W / 2, y: d.y + NODE_H / 2 }; }
-function shortPort(p) {
-  return p.replace("GigabitEthernet", "Gi").replace("FastEthernet", "Fa").replace("Ethernet", "Eth").replace("Serial", "Se");
-}
+const shortPort = (p) => p.replace("GigabitEthernet", "Gi").replace("FastEthernet", "Fa").replace("Ethernet", "Eth").replace("Serial", "Se");
+const linkKey = (l) => `${l.a.device}|${l.a.port}`;
+function findLink(key) { return state.topo.links.find((l) => l.a && linkKey(l) === key); }
 
 function fitView() {
   const ds = visibleDevices();
   const svg = $("canvas"), rect = svg.getBoundingClientRect(), w = rect.width, h = rect.height;
-  if (w < 50 || h < 50) { requestAnimationFrame(fitView); return; } // layout not ready yet
+  if (w < 50 || h < 50) { requestAnimationFrame(fitView); return; }
   state.userView = false;
   if (!ds.length) { state.view = { x: 0, y: 0, w, h }; return applyView(); }
   const xs = ds.map((d) => d.x), ys = ds.map((d) => d.y);
   const minX = Math.min(...xs) - 80, minY = Math.min(...ys) - 80;
   const bw = Math.max(...xs) + NODE_W + 80 - minX, bh = Math.max(...ys) + NODE_H + 100 - minY;
-  const s = Math.max(bw / w, bh / h);
+  const s = Math.max(bw / w, bh / h, 0.6);
   state.view = { x: minX - (w * s - bw) / 2, y: minY - (h * s - bh) / 2, w: w * s, h: h * s };
   applyView();
 }
 function applyView() { const v = state.view; $("canvas").setAttribute("viewBox", `${v.x} ${v.y} ${v.w} ${v.h}`); }
 function toWorld(evt) {
-  const svg = $("canvas"), r = svg.getBoundingClientRect(), v = state.view;
+  const r = $("canvas").getBoundingClientRect(), v = state.view;
   return { x: v.x + ((evt.clientX - r.left) / r.width) * v.w, y: v.y + ((evt.clientY - r.top) / r.height) * v.h };
 }
-
 function icon(kind, size = 26) {
-  const s = size, c = "currentColor";
+  const c = "currentColor";
   const g = {
     router: `<circle cx="13" cy="13" r="10" fill="none" stroke="${c}" stroke-width="1.6"/><path d="M8 11h8m-2-2 2 2-2 2M18 15h-8m2-2-2 2 2 2" stroke="${c}" stroke-width="1.6" fill="none"/>`,
     switch: `<rect x="3" y="7" width="20" height="12" rx="2.5" fill="none" stroke="${c}" stroke-width="1.6"/><path d="M7 11h10m-2-2 2 2-2 2M19 15H9m2-2-2 2 2 2" stroke="${c}" stroke-width="1.4" fill="none"/>`,
@@ -233,7 +279,7 @@ function icon(kind, size = 26) {
     cloud: `<path d="M8 19h11a4 4 0 0 0 0-8 6 6 0 0 0-11.5 1.5A3.3 3.3 0 0 0 8 19Z" fill="none" stroke="${c}" stroke-width="1.6"/>`,
     other: `<rect x="5" y="5" width="16" height="16" rx="3" fill="none" stroke="${c}" stroke-width="1.6"/>`,
   };
-  return `<svg width="${s}" height="${s}" viewBox="0 0 26 26" style="color:var(--accent)">${g[kind] || g.other}</svg>`;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 26 26" style="color:var(--accent)">${g[kind] || g.other}</svg>`;
 }
 
 function render() {
@@ -241,67 +287,53 @@ function render() {
   nodes.innerHTML = ""; links.innerHTML = "";
   const ds = visibleDevices();
   $("empty").style.display = ds.length ? "none" : "grid";
-
   for (const l of state.topo.links) {
     if (!l.a || !l.b) continue;
-    const A = devByName(l.a.device), B = devByName(l.b.device);
-    if (!A || !B) continue;
+    const A = devByName(l.a.device), B = devByName(l.b.device); if (!A || !B) continue;
     const pa = A.ports.find((p) => p.name === l.a.port), pb = B.ports.find((p) => p.name === l.b.port);
-    const up = pa && pb && pa.up && pb.up;
-    const a = center(A), b = center(B);
-    const line = document.createElementNS(SVGNS, "line");
-    Object.entries({ x1: a.x, y1: a.y, x2: b.x, y2: b.y }).forEach(([k, v]) => line.setAttribute(k, v));
-    line.setAttribute("class", "link " + (up ? "up" : "down"));
-    links.appendChild(line);
+    const up = pa && pb && pa.up && pb.up, a = center(A), b = center(B), key = linkKey(l);
+    for (const cls of ["linkhit", "link " + (up ? "up" : "down") + (state.selLink === key ? " sel" : "")]) {
+      const line = document.createElementNS(SVGNS, "line");
+      Object.entries({ x1: a.x, y1: a.y, x2: b.x, y2: b.y }).forEach(([k, v]) => line.setAttribute(k, v));
+      line.setAttribute("class", cls);
+      if (cls === "linkhit") line.addEventListener("pointerdown", (e) => { e.stopPropagation(); selectLink(key); });
+      links.appendChild(line);
+    }
     for (const [P, Q, port] of [[a, b, l.a.port], [b, a, l.b.port]]) {
       const t = document.createElementNS(SVGNS, "text");
       t.setAttribute("x", P.x + (Q.x - P.x) * 0.22); t.setAttribute("y", P.y + (Q.y - P.y) * 0.22 - 4);
-      t.setAttribute("class", "plabel"); t.textContent = shortPort(port);
-      links.appendChild(t);
+      t.setAttribute("class", "plabel"); t.textContent = shortPort(port); links.appendChild(t);
     }
   }
-
   for (const d of ds) {
-    const kind = KIND_BY_TYPE[d.type] || "other";
     const g = document.createElementNS(SVGNS, "g");
     g.setAttribute("class", "node" + (state.sel === d.name ? " sel" : "") + (d.power === false ? " off" : ""));
     g.setAttribute("transform", `translate(${d.x},${d.y})`);
     g.innerHTML = `<rect class="body" width="${NODE_W}" height="${NODE_H}" rx="10"/>
-      <g transform="translate(${NODE_W / 2 - 13},${NODE_H / 2 - 13})">${icon(kind).replace(/^<svg[^>]*>|<\/svg>$/g, "")}</g>
-      <text x="${NODE_W / 2}" y="${NODE_H + 15}"></text><text class="model" x="${NODE_W / 2}" y="${NODE_H + 27}"></text>`;
-    g.querySelector("g").setAttribute("style", "color:var(--accent)");
-    g.querySelectorAll("text")[0].textContent = d.name;
-    g.querySelectorAll("text")[1].textContent = d.model;
-    g.addEventListener("pointerdown", (e) => startDrag(e, d, g));
+      <g transform="translate(${NODE_W / 2 - 13},${NODE_H / 2 - 13})" style="color:var(--accent)">${icon(KIND_BY_TYPE[d.type] || "other").replace(/^<svg[^>]*>|<\/svg>$/g, "")}</g>
+      <text x="${NODE_W / 2}" y="${NODE_H + 15}">${esc(d.name)}</text><text class="model" x="${NODE_W / 2}" y="${NODE_H + 27}">${esc(d.model)}</text>`;
+    g.addEventListener("pointerdown", (e) => startDrag(e, d));
     nodes.appendChild(g);
   }
 }
 
-// drag devices / pan / zoom
-function startDrag(e, d, g) {
+function startDrag(e, d) {
   e.stopPropagation();
   if (state.linkFrom) return pickLinkTarget(d.name);
   const start = toWorld(e), ox = d.x, oy = d.y; let moved = false;
-  const move = (ev) => {
-    const p = toWorld(ev); d.x = Math.round(ox + p.x - start.x); d.y = Math.round(oy + p.y - start.y);
-    moved = moved || Math.abs(p.x - start.x) + Math.abs(p.y - start.y) > 3;
-    if (moved) render();
-  };
-  const up = () => {
-    removeEventListener("pointermove", move); removeEventListener("pointerup", up);
-    if (moved) act(() => rpc("move", [d.name, d.x, d.y]));
-    else inspect(d.name);
-  };
+  const move = (ev) => { const p = toWorld(ev); d.x = Math.round(ox + p.x - start.x); d.y = Math.round(oy + p.y - start.y);
+    moved = moved || Math.abs(p.x - start.x) + Math.abs(p.y - start.y) > 3; if (moved) render(); };
+  const up = () => { removeEventListener("pointermove", move); removeEventListener("pointerup", up);
+    if (moved) act(() => rpc("move", d.name, d.x, d.y)); else select(d.name); };
   addEventListener("pointermove", move); addEventListener("pointerup", up);
 }
 $("canvas").addEventListener("pointerdown", (e) => {
   if (state.linkFrom) { cancelLink(); return; }
   const svg = $("canvas"), r = svg.getBoundingClientRect(), v0 = { ...state.view }, sx = e.clientX, sy = e.clientY;
   svg.classList.add("panning");
-  state.userView = true;
-  const move = (ev) => { state.view.x = v0.x - ((ev.clientX - sx) / r.width) * v0.w; state.view.y = v0.y - ((ev.clientY - sy) / r.height) * v0.h; applyView(); };
+  const move = (ev) => { state.userView = true; state.view.x = v0.x - ((ev.clientX - sx) / r.width) * v0.w; state.view.y = v0.y - ((ev.clientY - sy) / r.height) * v0.h; applyView(); };
   const up = (ev) => { svg.classList.remove("panning"); removeEventListener("pointermove", move); removeEventListener("pointerup", up);
-    if (Math.abs(ev.clientX - sx) + Math.abs(ev.clientY - sy) < 3) inspect(null); };
+    if (Math.abs(ev.clientX - sx) + Math.abs(ev.clientY - sy) < 3) select(null); };
   addEventListener("pointermove", move); addEventListener("pointerup", up);
 });
 $("canvas").addEventListener("wheel", (e) => {
@@ -310,115 +342,265 @@ $("canvas").addEventListener("wheel", (e) => {
   state.view = { x: p.x - (p.x - v.x) * k, y: p.y - (p.y - v.y) * k, w: v.w * k, h: v.h * k }; applyView();
 }, { passive: false });
 
-// palette: click or drag onto canvas
 function buildPalette() {
   for (const item of PALETTE) {
     const el = document.createElement("div");
     el.className = "tile"; el.draggable = true;
-    el.innerHTML = `${icon(item.kind, 24)}<div>${item.label}<small>${item.model}</small></div>`;
+    el.innerHTML = `${icon(item.kind, 22)}<div>${item.label}<small>${item.model}</small></div>`;
     el.addEventListener("click", () => { const v = state.view; addDevice(item, v.x + v.w / 2 - NODE_W / 2, v.y + v.h / 2 - NODE_H / 2); });
     el.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/plain", JSON.stringify(item)));
     $("tiles").appendChild(el);
   }
   const svg = $("canvas");
   svg.addEventListener("dragover", (e) => e.preventDefault());
-  svg.addEventListener("drop", (e) => {
-    e.preventDefault();
-    const item = JSON.parse(e.dataTransfer.getData("text/plain") || "null"); if (!item) return;
-    const p = toWorld(e); addDevice(item, p.x - NODE_W / 2, p.y - NODE_H / 2);
-  });
+  svg.addEventListener("drop", (e) => { e.preventDefault(); const item = JSON.parse(e.dataTransfer.getData("text/plain") || "null");
+    if (item) { const p = toWorld(e); addDevice(item, p.x - NODE_W / 2, p.y - NODE_H / 2); } });
 }
 async function addDevice(item, x, y) {
-  const name = await act(() => rpc("addDevice", [item.type, item.model, Math.round(x), Math.round(y)]));
-  if (name) { await refresh(); inspect(name); }
+  const name = await act(() => rpc("addDevice", item.type, item.model, Math.round(x), Math.round(y)));
+  if (name) { await refresh(); select(name); } else if (name === "") toast(`PT did not create ${item.model}`);
 }
 
-// ---------------------------------------------------------------- inspector + console
-async function inspect(name, keepTerm) {
-  const prev = state.sel; state.sel = name; render();
-  const head = $("inspHead"), ports = $("ports"), input = $("termInput");
-  if (!name) { head.innerHTML = '<div class="placeholder">Select a device</div>'; ports.innerHTML = ""; input.disabled = true; return; }
-  const d = devByName(name); if (!d) return inspect(null);
-  head.innerHTML = `<h2></h2><div class="sub"></div>`;
-  head.querySelector("h2").textContent = d.name;
-  head.querySelector(".sub").textContent = `${d.model} · ${d.ports.length} ports${d.power === false ? " · powered off" : ""}`;
-  ports.innerHTML = "";
-  for (const p of d.ports) {
-    const row = document.createElement("div"); row.className = "port";
-    const ip = p.ip && p.ip !== "0.0.0.0" ? `${p.ip}` : "";
-    row.innerHTML = `<span class="dot ${p.up ? "on" : ""}"></span><span></span><span class="ip"></span>`;
-    row.children[1].textContent = shortPort(p.name);
-    row.children[2].textContent = ip;
-    if (!p.linked) {
-      const b = document.createElement("button"); b.textContent = "connect";
-      b.onclick = () => beginLink(d.name, p.name);
-      row.children[2].replaceWith(b);
+// ---------------------------------------------------------------- selection + inspector
+function selectLink(key) {
+  state.sel = null; state.selLink = key; render();
+  const l = findLink(key); if (!l) return;
+  $("inspHead").innerHTML = `<div class="insp-title"><b>Cable</b></div>
+    <div class="muted" style="font:12px var(--mono)">${esc(l.a.device)} ${esc(l.a.port)}<br>⇄ ${esc(l.b.device)} ${esc(l.b.port)}</div>
+    <div class="actions"><button class="danger" id="btnUnlink">Disconnect <kbd>Del</kbd></button></div>`;
+  $("btnUnlink").onclick = deleteSelection;
+  $("tabs").innerHTML = ""; $("panes").innerHTML = "";
+}
+
+async function select(name) {
+  state.selLink = null;
+  const changed = state.sel !== name;
+  state.sel = name; render();
+  if (!name) { $("inspHead").innerHTML = '<div class="placeholder">Select a device or a cable</div>'; $("tabs").innerHTML = ""; $("panes").innerHTML = ""; return; }
+  if (!changed) return;
+  const info = await act(() => rpc("device", name)); if (!info || state.sel !== name) return;
+  state.dev = info;
+  const ios = info.kind === "ios", host = info.kind === "host";
+  $("inspHead").innerHTML = `<div class="insp-title"><input id="devName" value="${esc(info.name)}" title="Rename (Enter)"><span class="muted">${esc(info.model)}</span></div>
+    <div class="actions"><button id="btnPower">${info.power === false ? "Power on" : "Power off"}</button>
+    <button class="danger" id="btnDel">Delete</button></div>`;
+  $("devName").onkeydown = (e) => { if (e.key === "Enter") rename(info.name, e.target.value.trim()); if (e.key === "Escape") e.target.value = info.name; };
+  $("btnPower").onclick = async () => { await act(() => rpc("power", name, info.power === false)); state.sel = null; await refresh(); select(name); };
+  $("btnDel").onclick = deleteSelection;
+
+  const tabs = ios ? ["CLI", "Config", "Ports"] : host ? ["Desktop", "Prompt", "Ports"] : ["Ports"];
+  const cur = tabs.includes(state.tab[info.kind]) ? state.tab[info.kind] : tabs[0];
+  $("tabs").innerHTML = tabs.map((t) => `<button data-t="${t}" class="${t === cur ? "on" : ""}">${t}</button>`).join("");
+  $("panes").innerHTML = tabs.map((t) => `<div class="pane ${t === "CLI" || t === "Prompt" ? "term-pane" : ""} ${t === cur ? "on" : ""}" data-p="${t}"></div>`).join("");
+  $("tabs").querySelectorAll("button").forEach((b) => b.onclick = () => showTab(info, b.dataset.t));
+  showTab(info, cur);
+}
+function pane(t) { return $("panes").querySelector(`[data-p="${t}"]`); }
+function showTab(info, t) {
+  state.tab[info.kind] = t;
+  $("tabs").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.t === t));
+  $("panes").querySelectorAll(".pane").forEach((p) => p.classList.toggle("on", p.dataset.p === t));
+  const p = pane(t);
+  if (t === "CLI" || t === "Prompt") buildTerminal(info, p);
+  else if (t === "Config") buildConfig(info, p);
+  else if (t === "Desktop") buildDesktop(info, p);
+  else if (t === "Ports") buildPorts(info, p);
+}
+async function refreshPorts() {
+  if (!state.sel) return;
+  const p = pane("Ports"); if (!p || !p.classList.contains("on")) return;
+  const info = await act(() => rpc("device", state.sel)); if (info) buildPorts(info, p);
+}
+async function rename(oldName, newName) {
+  if (!newName || newName === oldName) return;
+  await act(() => rpc("rename", oldName, newName)); state.sel = null; await refresh(); select(newName);
+}
+async function deleteSelection() {
+  if (state.selLink) {
+    const l = findLink(state.selLink); if (!l) return;
+    await act(() => rpc("unlink", l.a.device, l.a.port)); select(null); refresh(); return;
+  }
+  if (!state.sel || !confirm(`Delete ${state.sel}?`)) return;
+  const n = state.sel; await act(() => rpc("removeDevice", n)); select(null); refresh();
+}
+
+// ---- terminal (IOS CLI and PC command prompt share it)
+const terms = {}; // device -> { text, hist, idx }
+function termState(n) { return terms[n] || (terms[n] = { text: "", hist: [], idx: 0 }); }
+function termWrite(device, s) {
+  const ts = termState(device); ts.text += s; if (ts.text.length > 200000) ts.text = ts.text.slice(-150000);
+  if (state.sel === device) { const el = document.querySelector(".pane.on .term"); if (el) { el.textContent = ts.text; el.scrollTop = el.scrollHeight; } updateMoreHint(device); }
+}
+function updateMoreHint(device) {
+  const h = document.querySelector(".pane.on .term-help"); if (!h) return;
+  const more = /--More--\s*$/.test(termState(device).text);
+  h.innerHTML = more ? "<b style='color:var(--warn)'>--More--</b> · <kbd>Space</kbd> next page · <kbd>Esc</kbd> stop"
+    : "<kbd>↑↓</kbd> history · <kbd>⌃C</kbd> break · <kbd>?</kbd> help (e.g. <span style='font-family:var(--mono)'>show ?</span>)";
+}
+async function buildTerminal(info, p) {
+  const name = info.name, ts = termState(name);
+  p.innerHTML = `<pre class="term"></pre><div class="term-line"><span class="prompt"></span><input autocomplete="off" spellcheck="false" placeholder="type a command"></div><div class="term-help"></div>`;
+  const out = p.querySelector(".term"), input = p.querySelector("input");
+  out.textContent = ts.text; out.scrollTop = out.scrollHeight; updateMoreHint(name);
+  out.onclick = () => input.focus();
+  await act(() => rpc("watchTerm", name));
+  if (info.kind === "ios" && !ts.text) { const r = await act(() => rpc("ready", name)); if (r && !ts.text) termWrite(name, r.output || r.prompt); }
+  else if (!ts.text) { const pr = await act(() => rpc("prompt", name)); if (pr) termWrite(name, pr.prompt); }
+  input.focus();
+  input.onkeydown = async (e) => {
+    const more = /--More--\s*$/.test(ts.text);
+    if (more && (e.key === " " || e.key === "Enter") && !input.value) { e.preventDefault(); await act(() => rpc("key", name, e.key === " " ? " " : "\r")); return; }
+    if (more && e.key === "Escape") { e.preventDefault(); await act(() => rpc("key", name, "q")); return; }
+    if (e.ctrlKey && e.key.toLowerCase() === "c") { e.preventDefault(); await act(() => rpc("key", name, "\x03")); return; }
+    if (e.key === "ArrowUp") { e.preventDefault(); if (ts.idx > 0) input.value = ts.hist[--ts.idx]; return; }
+    if (e.key === "ArrowDown") { e.preventDefault(); ts.idx = Math.min(ts.hist.length, ts.idx + 1); input.value = ts.hist[ts.idx] || ""; return; }
+    if (e.key === "Enter") {
+      e.preventDefault(); const cmd = input.value; input.value = "";
+      if (cmd) { ts.hist.push(cmd); ts.idx = ts.hist.length; }
+      await act(() => rpc("cli", name, cmd));
     }
-    ports.appendChild(row);
-  }
-  const hasConsole = CONSOLE_TYPES.has(d.type);
-  input.disabled = !hasConsole;
-  input.placeholder = hasConsole ? `${d.name} console — type an IOS command` : "No IOS console for this device";
-  if (prev !== name && !keepTerm) {
-    $("term").textContent = "";
-    if (hasConsole) act(async () => { await rpc("watchTerm", [name]); const pr = await rpc("prompt", [name]); termWrite(pr.prompt || ""); });
-  }
+  };
 }
-function termWrite(s) { const t = $("term"); t.textContent += s; t.scrollTop = t.scrollHeight; }
-const hist = []; let hIdx = 0;
-$("termForm").addEventListener("submit", (e) => {
-  e.preventDefault(); const inp = $("termInput"), cmd = inp.value; inp.value = "";
-  if (cmd) { hist.push(cmd); hIdx = hist.length; }
-  if (state.sel) act(() => rpc("cli", [state.sel, cmd]));
-});
-$("termInput").addEventListener("keydown", (e) => {
-  if (e.key === "ArrowUp" && hIdx > 0) { e.preventDefault(); e.target.value = hist[--hIdx]; }
-  if (e.key === "ArrowDown") { e.preventDefault(); hIdx = Math.min(hist.length, hIdx + 1); e.target.value = hist[hIdx] || ""; }
-});
 
-// link mode: pick a free port, then a target device, then its port
+// ---- IOS config form
+function transcriptHtml(t) { return esc(t).split("\n").map((l) => /^\s*%|\^/.test(l) ? `<span class="err">${l}</span>` : l).join("\n"); }
+async function applyConfig(name, lines, box) {
+  const r = await act(() => rpc("configure", name, lines)); if (!r) return;
+  if (box) { box.style.display = "block"; box.innerHTML = transcriptHtml(r.output); box.scrollTop = box.scrollHeight; }
+  const bad = /% (Invalid|Incomplete|Ambiguous)/.test(r.output);
+  toast(bad ? "IOS reported an error — see transcript" : "Applied", !bad);
+  refresh();
+  return r;
+}
+async function buildConfig(info, p) {
+  const name = info.name, router = info.type === 0;
+  const ifs = info.ports.filter((x) => router ? true : /^Vlan/i.test(x.name) || true);
+  p.innerHTML = `<div class="form">
+    <div class="row"><label>Hostname</label><div style="display:flex;gap:6px"><input id="cfgHost" value="${esc(info.hostname || "")}"><button id="cfgHostBtn">Set</button></div></div>
+    <div class="h">Interfaces</div>
+    <table class="grid-if"><thead><tr><th>Interface</th>${router ? "<th>IP address</th><th>Mask</th>" : "<th>IP (Vlan only)</th><th>Mask</th>"}<th>Up</th><th></th></tr></thead><tbody>
+    ${ifs.map((x, i) => {
+      const l3 = router || /^Vlan/i.test(x.name);
+      const ip = x.ip && x.ip !== "0.0.0.0" ? x.ip : "", mask = x.mask && x.mask !== "0.0.0.0" ? x.mask : "";
+      return `<tr data-i="${i}"><td class="name">${esc(shortPort(x.name))}</td>
+        <td>${l3 ? `<input class="ip" value="${esc(ip)}" placeholder="—">` : ""}</td><td>${l3 ? `<input class="mask" value="${esc(mask)}" placeholder="255.255.255.0">` : ""}</td>
+        <td><label class="toggle"><input type="checkbox" class="up" ${x.up ? "checked" : ""}></label></td><td><button class="apply">Apply</button></td></tr>`; }).join("")}
+    </tbody></table>
+    <div class="h">Paste configuration</div>
+    <textarea id="cfgPaste" placeholder="interface g0/1&#10; ip address 10.0.0.1 255.255.255.0&#10; no shutdown&#10;ip route 0.0.0.0 0.0.0.0 10.0.0.254"></textarea>
+    <div class="actions"><button class="primary" id="cfgPasteBtn">Apply lines</button><button id="cfgRun">Running config</button><button id="cfgSave">Save to startup</button></div>
+    <div class="transcript" id="cfgOut" style="display:none"></div>
+  </div>`;
+  const out = p.querySelector("#cfgOut");
+  p.querySelector("#cfgHostBtn").onclick = () => applyConfig(name, ["hostname " + p.querySelector("#cfgHost").value.trim()], out);
+  p.querySelectorAll("tr[data-i]").forEach((tr) => {
+    tr.querySelector(".apply").onclick = () => {
+      const x = ifs[+tr.dataset.i], lines = ["interface " + x.name];
+      const ip = tr.querySelector(".ip")?.value.trim(), mask = tr.querySelector(".mask")?.value.trim();
+      if (tr.querySelector(".ip")) lines.push(ip ? `ip address ${ip} ${mask || "255.255.255.0"}` : "no ip address");
+      lines.push(tr.querySelector(".up").checked ? "no shutdown" : "shutdown");
+      applyConfig(name, lines, out);
+    };
+  });
+  p.querySelector("#cfgPasteBtn").onclick = () => {
+    const lines = p.querySelector("#cfgPaste").value.split("\n").map((s) => s.trim()).filter((s) => s && !s.startsWith("!"));
+    if (lines.length) applyConfig(name, lines, out);
+  };
+  p.querySelector("#cfgRun").onclick = async () => { const t = await act(() => rpc("runningConfig", name)); if (t != null) { out.style.display = "block"; out.style.maxHeight = "60vh"; out.textContent = t; } };
+  p.querySelector("#cfgSave").onclick = async () => { const t = await act(() => rpc("saveConfig", name)); if (t != null) { out.style.display = "block"; out.innerHTML = transcriptHtml(t); toast("Saved to startup-config", true); } };
+}
+
+// ---- PC desktop: IP configuration
+function buildDesktop(info, p) {
+  const port = info.ports.find((x) => /^FastEthernet0$|^GigabitEthernet0$/.test(x.name)) || info.ports[0] || {};
+  const v = (s) => (s && s !== "0.0.0.0" ? s : "");
+  p.innerHTML = `<div class="form">
+    <div class="h">IP Configuration <span class="muted">(${esc(port.name || "")})</span></div>
+    <div class="row"><label>Mode</label><div><label class="toggle"><input type="radio" name="ipm" value="static" ${port.dhcp ? "" : "checked"}> Static</label>
+      &nbsp; <label class="toggle"><input type="radio" name="ipm" value="dhcp" ${port.dhcp ? "checked" : ""}> DHCP</label></div></div>
+    <div class="row"><label>IPv4 address</label><input id="hIp" value="${esc(v(port.ip))}"></div>
+    <div class="row"><label>Subnet mask</label><input id="hMask" value="${esc(v(port.mask) || "255.255.255.0")}"></div>
+    <div class="row"><label>Default gateway</label><input id="hGw" value="${esc(v(info.gateway) || v(port.gateway))}"></div>
+    <div class="row"><label>DNS server</label><input id="hDns" value="${esc(v(info.dns))}"></div>
+    <div class="actions"><button class="primary" id="hApply">Apply</button></div>
+  </div>`;
+  p.querySelector("#hApply").onclick = async () => {
+    const dhcp = p.querySelector('input[name="ipm"]:checked').value === "dhcp";
+    const ok = await act(() => rpc("hostIp", info.name, { dhcp, port: port.name, ip: p.querySelector("#hIp").value.trim(),
+      mask: p.querySelector("#hMask").value.trim(), gateway: p.querySelector("#hGw").value.trim(), dns: p.querySelector("#hDns").value.trim() }));
+    if (ok) { toast("IP configuration applied", true); refresh(); }
+  };
+}
+
+// ---- ports + linking
+function buildPorts(info, p) {
+  p.innerHTML = `<div class="ports">${info.ports.map((x, i) => `<div class="port"><span class="dot ${x.up ? "on" : ""}"></span><span>${esc(shortPort(x.name))}</span>
+    ${x.linked ? `<span class="ip">${esc(x.ip && x.ip !== "0.0.0.0" ? x.ip : "linked")}</span>` : `<button data-i="${i}">connect</button>`}</div>`).join("")}</div>`;
+  p.querySelectorAll("button[data-i]").forEach((b) => b.onclick = () => beginLink(info.name, info.ports[+b.dataset.i].name));
+}
 function beginLink(device, port) {
   state.linkFrom = { device, port };
-  const b = $("banner"); b.style.display = "block"; b.textContent = `Connect ${device} ${shortPort(port)} → click the other device (Esc to cancel)`;
+  const b = $("banner"); b.style.display = "block"; b.textContent = `Connect ${device} ${shortPort(port)} → click the other device (Esc cancels)`;
 }
 function cancelLink() { state.linkFrom = null; $("banner").style.display = "none"; }
-function pickLinkTarget(name) {
+async function pickLinkTarget(name) {
   const from = state.linkFrom, d = devByName(name);
   if (!d || name === from.device) return;
   const free = d.ports.filter((p) => !p.linked);
   if (!free.length) return toast(`${name} has no free ports`);
   $("banner").textContent = `Connect ${from.device} ${shortPort(from.port)} → pick a port on ${name}`;
-  const ports = $("ports"); ports.innerHTML = "";
-  $("inspHead").innerHTML = `<h2></h2><div class="sub">choose a port</div>`; $("inspHead").querySelector("h2").textContent = name;
-  for (const p of free) {
-    const row = document.createElement("div"); row.className = "port";
-    row.innerHTML = `<span class="dot"></span><span></span>`; row.children[1].textContent = shortPort(p.name);
-    const b = document.createElement("button"); b.textContent = "use"; row.appendChild(b);
-    b.onclick = async () => { cancelLink(); await act(() => rpc("link", [from.device, from.port, name, p.name, "auto"])); await refresh(); inspect(from.device); };
-    ports.appendChild(row);
-  }
+  $("inspHead").innerHTML = `<div class="insp-title"><b>${esc(name)}</b><span class="muted">choose a port</span></div>`;
+  $("tabs").innerHTML = "";
+  $("panes").innerHTML = `<div class="pane on"><div class="ports">${free.map((p, i) => `<div class="port"><span class="dot"></span><span>${esc(shortPort(p.name))}</span><button data-i="${i}">use</button></div>`).join("")}</div></div>`;
+  $("panes").querySelectorAll("button[data-i]").forEach((b) => b.onclick = async () => {
+    cancelLink(); const p = free[+b.dataset.i];
+    if (await act(() => rpc("link", from.device, from.port, name, p.name, "auto")) !== undefined) toast("Connected", true);
+    state.sel = null; await refresh(); select(from.device);
+  });
 }
+
+// ---------------------------------------------------------------- activity drawer
+async function openActivity() {
+  const a = await act(() => rpc("activity")); if (!a) return;
+  if (!a.isActivity) return toast("Not an activity file");
+  state.activity = a; state.page = Math.min(state.page, Math.max(0, a.instructions.length - 1));
+  $("score").textContent = a.score ? `${a.score.percent}% · ${a.score.correct}/${a.score.items}` : "score locked by PT";
+  $("score").title = a.scoreError || "";
+  showPage(); $("drawer").classList.add("open");
+}
+function showPage() {
+  const a = state.activity; if (!a) return;
+  const n = a.instructions.length;
+  $("pageNo").textContent = n ? `${state.page + 1}/${n}` : "0/0";
+  $("instr").srcdoc = `<style>body{font:14px/1.5 -apple-system,system-ui,sans-serif;padding:14px;color:#222}</style>` + (a.instructions[state.page] || "<i>No instructions</i>");
+}
+$("btnActivity").onclick = () => $("drawer").classList.contains("open") ? $("drawer").classList.remove("open") : openActivity();
+$("btnCloseDrawer").onclick = () => $("drawer").classList.remove("open");
+$("btnPrevPage").onclick = () => { state.page = Math.max(0, state.page - 1); showPage(); };
+$("btnNextPage").onclick = () => { state.page = Math.min((state.activity?.instructions.length || 1) - 1, state.page + 1); showPage(); };
+
+// ---------------------------------------------------------------- files
+async function fileNew() { if (confirm("Start a new file? Unsaved changes in Packet Tracer may be lost.")) { await act(() => rpc("newFile")); select(null); state.userView = false; refresh(); } }
+async function fileOpen() { const p = await act(() => rpc("openDialog")); if (p) { await act(() => rpc("open", p)); select(null); state.userView = false; refresh(); } }
+async function fileSave() { const r = await act(() => rpc("save")); if (r !== undefined) toast("Saved", true); }
+async function fileSaveAs() { const p = await act(() => rpc("saveDialog")); if (p) { await act(() => rpc("saveAs", p)); toast("Saved", true); refresh(); } }
+$("btnNew").onclick = fileNew; $("btnOpen").onclick = fileOpen; $("btnSave").onclick = fileSave; $("btnSaveAs").onclick = fileSaveAs;
 
 // ---------------------------------------------------------------- commands
 const COMMANDS = () => [
   ...PALETTE.map((p) => ({ name: `Add ${p.label} ${p.model}`, run: () => { const v = state.view; addDevice(p, v.x + v.w / 2, v.y + v.h / 2); } })),
+  { name: "New file", run: fileNew }, { name: "Open file…", run: fileOpen }, { name: "Save", run: fileSave }, { name: "Save as…", run: fileSaveAs },
+  ...(state.isActivity ? [{ name: "Show activity instructions", run: openActivity }] : []),
   { name: state.ptVisible ? "Hide Packet Tracer window" : "Show Packet Tracer window", run: togglePT },
-  { name: "Refresh topology", run: refresh },
-  { name: "Fit topology to screen", run: () => { fitView(); render(); } },
-  ...(state.sel ? [{ name: `Delete ${state.sel}`, run: deleteSelected }] : []),
+  { name: "Refresh", run: refresh }, { name: "Fit to screen", run: () => { fitView(); render(); } },
+  ...(state.sel ? [{ name: `Delete ${state.sel}`, run: deleteSelection }] : []),
 ];
 let cmdItems = [], cmdIdx = 0;
 function openCmdk() { $("cmdk").style.display = "grid"; $("cmdkInput").value = ""; filterCmdk(); $("cmdkInput").focus(); }
 function closeCmdk() { $("cmdk").style.display = "none"; }
-function filterCmdk() {
-  const q = $("cmdkInput").value.toLowerCase();
-  cmdItems = COMMANDS().filter((c) => q.split(/\s+/).every((w) => c.name.toLowerCase().includes(w))); cmdIdx = 0; drawCmdk();
-}
-function drawCmdk() {
-  const ul = $("cmdkList"); ul.innerHTML = "";
-  cmdItems.forEach((c, i) => { const li = document.createElement("li"); li.textContent = c.name; if (i === cmdIdx) li.className = "active";
-    li.onclick = () => { closeCmdk(); c.run(); }; ul.appendChild(li); });
-}
+function filterCmdk() { const q = $("cmdkInput").value.toLowerCase(); cmdItems = COMMANDS().filter((c) => q.split(/\s+/).every((w) => c.name.toLowerCase().includes(w))); cmdIdx = 0; drawCmdk(); }
+function drawCmdk() { const ul = $("cmdkList"); ul.innerHTML = "";
+  cmdItems.forEach((c, i) => { const li = document.createElement("li"); li.textContent = c.name; if (i === cmdIdx) li.className = "active"; li.onclick = () => { closeCmdk(); c.run(); }; ul.appendChild(li); }); }
 $("cmdkInput").addEventListener("input", filterCmdk);
 $("cmdkInput").addEventListener("keydown", (e) => {
   if (e.key === "ArrowDown") { cmdIdx = Math.min(cmdItems.length - 1, cmdIdx + 1); drawCmdk(); e.preventDefault(); }
@@ -427,27 +609,19 @@ $("cmdkInput").addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeCmdk();
 });
 $("cmdk").addEventListener("pointerdown", (e) => { if (e.target.id === "cmdk") closeCmdk(); });
-
-async function togglePT() {
-  const next = !state.ptVisible;
-  if (await act(() => rpc(next ? "show" : "hide")) !== undefined) { state.ptVisible = next; $("btnPT").textContent = next ? "Hide PT" : "Show PT"; }
-}
-async function deleteSelected() {
-  if (!state.sel || !confirm(`Delete ${state.sel} from the Packet Tracer workspace?`)) return;
-  const n = state.sel; await act(() => rpc("removeDevice", [n])); inspect(null); refresh();
-}
+async function togglePT() { const next = !state.ptVisible; if (await act(() => rpc(next ? "show" : "hide")) !== undefined) { state.ptVisible = next; $("btnPT").textContent = next ? "Hide PT" : "Show PT"; } }
 
 addEventListener("keydown", (e) => {
-  const typing = e.target.tagName === "INPUT";
-  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openCmdk(); }
-  else if (e.key === "Escape") { cancelLink(); closeCmdk(); }
-  else if (!typing && (e.key === "Delete" || e.key === "Backspace")) deleteSelected();
-  else if (!typing && e.key.toLowerCase() === "r") refresh();
+  const typing = /INPUT|TEXTAREA|SELECT/.test(e.target.tagName);
+  const mod = e.metaKey || e.ctrlKey;
+  if (mod && e.key.toLowerCase() === "k") { e.preventDefault(); openCmdk(); }
+  else if (mod && e.key.toLowerCase() === "s") { e.preventDefault(); e.shiftKey ? fileSaveAs() : fileSave(); }
+  else if (mod && e.key.toLowerCase() === "o") { e.preventDefault(); fileOpen(); }
+  else if (e.key === "Escape" && !typing) { cancelLink(); closeCmdk(); }
+  else if (!typing && (e.key === "Delete" || e.key === "Backspace")) deleteSelection();
   else if (!typing && e.key.toLowerCase() === "f") { fitView(); render(); }
 });
-$("btnRefresh").onclick = refresh;
-$("btnPT").onclick = togglePT;
-$("btnCmd").onclick = openCmdk;
+$("btnPT").onclick = togglePT; $("btnCmd").onclick = openCmdk;
 addEventListener("resize", () => { if (!state.view) return; if (state.userView) applyView(); else fitView(); });
 
 buildPalette();
