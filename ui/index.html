@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>reCPT</title>
+<style>
+  :root {
+    --bg: #0f1216; --panel: #161a20; --panel-2: #1c2129; --line: #262c36; --text: #e6e9ee;
+    --muted: #8a93a3; --accent: #4cc2a8; --accent-2: #2f8f7b; --warn: #e5a54b; --bad: #e0685f;
+    --good: #5cc27a; --radius: 10px; --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; background: var(--bg); color: var(--text);
+    font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif; }
+  button { font: inherit; color: inherit; background: var(--panel-2); border: 1px solid var(--line);
+    border-radius: 8px; padding: 5px 10px; cursor: pointer; }
+  button:hover { border-color: #3a4352; }
+  button.primary { background: var(--accent-2); border-color: var(--accent-2); }
+  kbd { font: 11px var(--mono); color: var(--muted); border: 1px solid var(--line); border-bottom-width: 2px;
+    border-radius: 4px; padding: 0 4px; }
+
+  .app { display: grid; height: 100%; grid-template: 48px 1fr / 210px 1fr 340px; }
+  header { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; padding: 0 14px;
+    border-bottom: 1px solid var(--line); background: var(--panel); }
+  .brand { font-weight: 700; letter-spacing: .3px; }
+  .brand span { color: var(--accent); }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 99px;
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bad); }
+  .dot.on { background: var(--good); box-shadow: 0 0 0 3px #5cc27a22; }
+  .file { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40vw; }
+  .spacer { flex: 1; }
+
+  aside.palette { border-right: 1px solid var(--line); background: var(--panel); padding: 12px; overflow: auto; }
+  .section { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .8px; margin: 6px 0 8px; }
+  .tile { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; cursor: grab;
+    border: 1px solid transparent; user-select: none; }
+  .tile:hover { background: var(--panel-2); border-color: var(--line); }
+  .tile svg { flex: none; }
+  .tile small { display: block; color: var(--muted); font-size: 11px; }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 14px; line-height: 1.6; }
+
+  main { position: relative; overflow: hidden; }
+  #canvas { width: 100%; height: 100%; display: block; cursor: default;
+    background-image: radial-gradient(#ffffff10 1px, transparent 1px); background-size: 22px 22px; }
+  #canvas.panning { cursor: grabbing; }
+  .node { cursor: pointer; }
+  .node rect.body { fill: var(--panel-2); stroke: var(--line); stroke-width: 1.5; }
+  .node:hover rect.body { stroke: #4a5566; }
+  .node.sel rect.body { stroke: var(--accent); stroke-width: 2; }
+  .node.off rect.body { opacity: .5; }
+  .node text { fill: var(--text); font-size: 12px; text-anchor: middle; pointer-events: none; }
+  .node text.model { fill: var(--muted); font-size: 10px; }
+  .link { stroke-width: 2; }
+  .link.up { stroke: var(--good); } .link.down { stroke: #6b3b39; stroke-dasharray: 5 4; }
+  .plabel { fill: var(--muted); font: 9.5px var(--mono); text-anchor: middle; pointer-events: none; }
+  .banner { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: var(--panel);
+    border: 1px solid var(--accent-2); border-radius: 99px; padding: 6px 14px; display: none; }
+  .empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); pointer-events: none; }
+
+  aside.inspector { border-left: 1px solid var(--line); background: var(--panel); display: grid;
+    grid-template-rows: auto 1fr minmax(220px, 45%); min-height: 0; }
+  .insp-head { padding: 14px; border-bottom: 1px solid var(--line); }
+  .insp-head h2 { margin: 0 0 2px; font-size: 16px; }
+  .insp-head .sub { color: var(--muted); }
+  .ports { overflow: auto; padding: 8px 6px; }
+  .port { display: grid; grid-template-columns: 10px 1fr auto; gap: 8px; align-items: center; padding: 5px 8px;
+    border-radius: 6px; font: 12px var(--mono); }
+  .port:hover { background: var(--panel-2); }
+  .port .dot { width: 7px; height: 7px; }
+  .port .ip { color: var(--muted); }
+  .port button { padding: 1px 7px; font-size: 11px; }
+  .console { display: grid; grid-template-rows: 1fr auto; border-top: 1px solid var(--line); min-height: 0; background: #0b0d10; }
+  .console pre { margin: 0; padding: 10px; overflow: auto; font: 12px/1.45 var(--mono); white-space: pre-wrap; color: #cfe3d9; }
+  .console form { display: flex; border-top: 1px solid var(--line); }
+  .console input { flex: 1; background: transparent; border: 0; color: var(--text); padding: 9px 10px; font: 12px var(--mono); outline: none; }
+  .placeholder { color: var(--muted); padding: 14px; }
+
+  .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: #2a1716;
+    border: 1px solid var(--bad); color: #ffd9d5; padding: 8px 14px; border-radius: 8px; display: none; max-width: 70vw; }
+  .cmdk { position: fixed; inset: 0; background: #0008; display: none; place-items: start center; padding-top: 14vh; }
+  .cmdk .box { width: min(560px, 90vw); background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .cmdk input { width: 100%; background: transparent; border: 0; border-bottom: 1px solid var(--line); color: var(--text);
+    padding: 14px 16px; font-size: 15px; outline: none; }
+  .cmdk ul { list-style: none; margin: 0; padding: 6px; max-height: 50vh; overflow: auto; }
+  .cmdk li { padding: 8px 10px; border-radius: 6px; cursor: pointer; }
+  .cmdk li.active { background: var(--panel-2); }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">re<span>CPT</span></div>
+    <div class="pill"><span class="dot" id="statusDot"></span><span id="statusText">connecting…</span></div>
+    <div class="file" id="fileName"></div>
+    <div class="spacer"></div>
+    <button id="btnRefresh" title="Refresh (R)">Refresh</button>
+    <button id="btnPT" title="Show or hide the Packet Tracer window">Hide PT</button>
+    <button id="btnCmd" title="Command palette">Commands <kbd>⌘K</kbd></button>
+  </header>
+
+  <aside class="palette">
+    <div class="section">Devices</div>
+    <div id="tiles"></div>
+    <div class="hint">
+      Drag a device onto the canvas, or click to drop it in the middle.<br>
+      <kbd>Del</kbd> remove · <kbd>⌘K</kbd> commands<br>
+      Scroll to zoom · drag empty space to pan
+    </div>
+  </aside>
+
+  <main>
+    <svg id="canvas"><g id="world"><g id="links"></g><g id="nodes"></g></g></svg>
+    <div class="banner" id="banner"></div>
+    <div class="empty" id="empty">Waiting for Packet Tracer…</div>
+  </main>
+
+  <aside class="inspector">
+    <div class="insp-head" id="inspHead"><div class="placeholder">Select a device</div></div>
+    <div class="ports" id="ports"></div>
+    <div class="console">
+      <pre id="term"></pre>
+      <form id="termForm"><input id="termInput" placeholder="Select a router or switch to use its console" autocomplete="off" spellcheck="false" disabled></form>
+    </div>
+  </aside>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="cmdk" id="cmdk"><div class="box"><input id="cmdkInput" placeholder="Type a command…"><ul id="cmdkList"></ul></div></div>
+
+<script>
+const TOKEN = "__PTB_TOKEN__";
+const $ = (id) => document.getElementById(id);
+const SVGNS = "http://www.w3.org/2000/svg";
+
+// ---------------------------------------------------------------- data
+const PALETTE = [
+  { label: "Router", model: "1941", type: "router", kind: "router" },
+  { label: "Router", model: "2911", type: "router", kind: "router" },
+  { label: "Router", model: "4331", type: "router", kind: "router" },
+  { label: "Switch", model: "2960-24TT", type: "switch", kind: "switch" },
+  { label: "PC", model: "PC-PT", type: "pc", kind: "pc" },
+  { label: "Laptop", model: "Laptop-PT", type: "laptop", kind: "pc" },
+  { label: "Server", model: "Server-PT", type: "server", kind: "server" },
+];
+const KIND_BY_TYPE = { 0: "router", 1: "switch", 16: "switch", 17: "switch", 8: "pc", 18: "pc", 9: "server", 2: "cloud" };
+const CONSOLE_TYPES = new Set([0, 1, 16, 17, 27]);
+
+const state = { topo: { devices: [], links: [] }, sel: null, linkFrom: null, view: null, ptVisible: true, connected: false };
+
+// ---------------------------------------------------------------- transport
+async function rpc(call, args = []) {
+  const r = await fetch("/rpc", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + TOKEN },
+    body: JSON.stringify({ call, args }) });
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || "error");
+  return j.result;
+}
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.style.display = "block";
+  clearTimeout(toast.t); toast.t = setTimeout(() => (t.style.display = "none"), 4000);
+}
+async function act(fn) { try { return await fn(); } catch (e) { toast(e.message); } }
+
+function connectEvents() {
+  const ws = new WebSocket(`ws://${location.host}/events?token=${TOKEN}`);
+  ws.onmessage = (e) => {
+    const m = JSON.parse(e.data);
+    if (m.event === "agent") { setStatus(m.connected); if (m.connected) refresh(); }
+    else if (m.event === "topology") scheduleRefresh();
+    else if (m.event === "term" && state.sel && m.device === state.sel && m.data != null) termWrite(m.data);
+  };
+  ws.onclose = () => { setStatus(false, "daemon offline"); setTimeout(connectEvents, 1500); };
+}
+function setStatus(on, text) {
+  state.connected = on;
+  $("statusDot").classList.toggle("on", !!on);
+  $("statusText").textContent = text || (on ? "connected" : "Packet Tracer not connected");
+  $("empty").textContent = on ? "Empty workspace — drag a device in" : "Waiting for Packet Tracer…";
+}
+
+let refreshTimer;
+function scheduleRefresh() { clearTimeout(refreshTimer); refreshTimer = setTimeout(refresh, 120); }
+async function refresh() {
+  try {
+    const [info, topo] = await Promise.all([rpc("info"), rpc("topology")]);
+    setStatus(true, `PT ${info.version.split(".").slice(0, 3).join(".")}`);
+    $("fileName").textContent = info.file ? info.file.split("/").pop() + (info.isActivity ? "  · activity" : "") : "untitled";
+    state.topo = topo;
+    if (!state.view) fitView();
+    render();
+    if (state.sel) inspect(state.sel, true);
+  } catch (e) { setStatus(false, e.message.includes("not connected") ? null : e.message); }
+}
+
+// ---------------------------------------------------------------- canvas
+const NODE_W = 64, NODE_H = 48;
+// PT parks helper objects (e.g. Power Distribution Device) far outside the logical canvas.
+function visibleDevices() { return state.topo.devices.filter((d) => Math.abs(d.x) < 3000 && Math.abs(d.y) < 3000); }
+function devByName(n) { return state.topo.devices.find((d) => d.name === n); }
+function center(d) { return { x: d.x + NODE_W / 2, y: d.y + NODE_H / 2 }; }
+function shortPort(p) {
+  return p.replace("GigabitEthernet", "Gi").replace("FastEthernet", "Fa").replace("Ethernet", "Eth").replace("Serial", "Se");
+}
+
+function fitView() {
+  const ds = visibleDevices();
+  const svg = $("canvas"), rect = svg.getBoundingClientRect(), w = rect.width, h = rect.height;
+  if (w < 50 || h < 50) { requestAnimationFrame(fitView); return; } // layout not ready yet
+  state.userView = false;
+  if (!ds.length) { state.view = { x: 0, y: 0, w, h }; return applyView(); }
+  const xs = ds.map((d) => d.x), ys = ds.map((d) => d.y);
+  const minX = Math.min(...xs) - 80, minY = Math.min(...ys) - 80;
+  const bw = Math.max(...xs) + NODE_W + 80 - minX, bh = Math.max(...ys) + NODE_H + 100 - minY;
+  const s = Math.max(bw / w, bh / h);
+  state.view = { x: minX - (w * s - bw) / 2, y: minY - (h * s - bh) / 2, w: w * s, h: h * s };
+  applyView();
+}
+function applyView() { const v = state.view; $("canvas").setAttribute("viewBox", `${v.x} ${v.y} ${v.w} ${v.h}`); }
+function toWorld(evt) {
+  const svg = $("canvas"), r = svg.getBoundingClientRect(), v = state.view;
+  return { x: v.x + ((evt.clientX - r.left) / r.width) * v.w, y: v.y + ((evt.clientY - r.top) / r.height) * v.h };
+}
+
+function icon(kind, size = 26) {
+  const s = size, c = "currentColor";
+  const g = {
+    router: `<circle cx="13" cy="13" r="10" fill="none" stroke="${c}" stroke-width="1.6"/><path d="M8 11h8m-2-2 2 2-2 2M18 15h-8m2-2-2 2 2 2" stroke="${c}" stroke-width="1.6" fill="none"/>`,
+    switch: `<rect x="3" y="7" width="20" height="12" rx="2.5" fill="none" stroke="${c}" stroke-width="1.6"/><path d="M7 11h10m-2-2 2 2-2 2M19 15H9m2-2-2 2 2 2" stroke="${c}" stroke-width="1.4" fill="none"/>`,
+    pc: `<rect x="4" y="5" width="18" height="12" rx="2" fill="none" stroke="${c}" stroke-width="1.6"/><path d="M10 21h6M13 17v4" stroke="${c}" stroke-width="1.6"/>`,
+    server: `<rect x="6" y="3" width="14" height="20" rx="2" fill="none" stroke="${c}" stroke-width="1.6"/><path d="M9 8h8M9 12h8M9 16h4" stroke="${c}" stroke-width="1.4"/>`,
+    cloud: `<path d="M8 19h11a4 4 0 0 0 0-8 6 6 0 0 0-11.5 1.5A3.3 3.3 0 0 0 8 19Z" fill="none" stroke="${c}" stroke-width="1.6"/>`,
+    other: `<rect x="5" y="5" width="16" height="16" rx="3" fill="none" stroke="${c}" stroke-width="1.6"/>`,
+  };
+  return `<svg width="${s}" height="${s}" viewBox="0 0 26 26" style="color:var(--accent)">${g[kind] || g.other}</svg>`;
+}
+
+function render() {
+  const nodes = $("nodes"), links = $("links");
+  nodes.innerHTML = ""; links.innerHTML = "";
+  const ds = visibleDevices();
+  $("empty").style.display = ds.length ? "none" : "grid";
+
+  for (const l of state.topo.links) {
+    if (!l.a || !l.b) continue;
+    const A = devByName(l.a.device), B = devByName(l.b.device);
+    if (!A || !B) continue;
+    const pa = A.ports.find((p) => p.name === l.a.port), pb = B.ports.find((p) => p.name === l.b.port);
+    const up = pa && pb && pa.up && pb.up;
+    const a = center(A), b = center(B);
+    const line = document.createElementNS(SVGNS, "line");
+    Object.entries({ x1: a.x, y1: a.y, x2: b.x, y2: b.y }).forEach(([k, v]) => line.setAttribute(k, v));
+    line.setAttribute("class", "link " + (up ? "up" : "down"));
+    links.appendChild(line);
+    for (const [P, Q, port] of [[a, b, l.a.port], [b, a, l.b.port]]) {
+      const t = document.createElementNS(SVGNS, "text");
+      t.setAttribute("x", P.x + (Q.x - P.x) * 0.22); t.setAttribute("y", P.y + (Q.y - P.y) * 0.22 - 4);
+      t.setAttribute("class", "plabel"); t.textContent = shortPort(port);
+      links.appendChild(t);
+    }
+  }
+
+  for (const d of ds) {
+    const kind = KIND_BY_TYPE[d.type] || "other";
+    const g = document.createElementNS(SVGNS, "g");
+    g.setAttribute("class", "node" + (state.sel === d.name ? " sel" : "") + (d.power === false ? " off" : ""));
+    g.setAttribute("transform", `translate(${d.x},${d.y})`);
+    g.innerHTML = `<rect class="body" width="${NODE_W}" height="${NODE_H}" rx="10"/>
+      <g transform="translate(${NODE_W / 2 - 13},${NODE_H / 2 - 13})">${icon(kind).replace(/^<svg[^>]*>|<\/svg>$/g, "")}</g>
+      <text x="${NODE_W / 2}" y="${NODE_H + 15}"></text><text class="model" x="${NODE_W / 2}" y="${NODE_H + 27}"></text>`;
+    g.querySelector("g").setAttribute("style", "color:var(--accent)");
+    g.querySelectorAll("text")[0].textContent = d.name;
+    g.querySelectorAll("text")[1].textContent = d.model;
+    g.addEventListener("pointerdown", (e) => startDrag(e, d, g));
+    nodes.appendChild(g);
+  }
+}
+
+// drag devices / pan / zoom
+function startDrag(e, d, g) {
+  e.stopPropagation();
+  if (state.linkFrom) return pickLinkTarget(d.name);
+  const start = toWorld(e), ox = d.x, oy = d.y; let moved = false;
+  const move = (ev) => {
+    const p = toWorld(ev); d.x = Math.round(ox + p.x - start.x); d.y = Math.round(oy + p.y - start.y);
+    moved = moved || Math.abs(p.x - start.x) + Math.abs(p.y - start.y) > 3;
+    if (moved) render();
+  };
+  const up = () => {
+    removeEventListener("pointermove", move); removeEventListener("pointerup", up);
+    if (moved) act(() => rpc("move", [d.name, d.x, d.y]));
+    else inspect(d.name);
+  };
+  addEventListener("pointermove", move); addEventListener("pointerup", up);
+}
+$("canvas").addEventListener("pointerdown", (e) => {
+  if (state.linkFrom) { cancelLink(); return; }
+  const svg = $("canvas"), r = svg.getBoundingClientRect(), v0 = { ...state.view }, sx = e.clientX, sy = e.clientY;
+  svg.classList.add("panning");
+  state.userView = true;
+  const move = (ev) => { state.view.x = v0.x - ((ev.clientX - sx) / r.width) * v0.w; state.view.y = v0.y - ((ev.clientY - sy) / r.height) * v0.h; applyView(); };
+  const up = (ev) => { svg.classList.remove("panning"); removeEventListener("pointermove", move); removeEventListener("pointerup", up);
+    if (Math.abs(ev.clientX - sx) + Math.abs(ev.clientY - sy) < 3) inspect(null); };
+  addEventListener("pointermove", move); addEventListener("pointerup", up);
+});
+$("canvas").addEventListener("wheel", (e) => {
+  e.preventDefault(); state.userView = true;
+  const p = toWorld(e), k = Math.exp(e.deltaY * 0.0015), v = state.view;
+  state.view = { x: p.x - (p.x - v.x) * k, y: p.y - (p.y - v.y) * k, w: v.w * k, h: v.h * k }; applyView();
+}, { passive: false });
+
+// palette: click or drag onto canvas
+function buildPalette() {
+  for (const item of PALETTE) {
+    const el = document.createElement("div");
+    el.className = "tile"; el.draggable = true;
+    el.innerHTML = `${icon(item.kind, 24)}<div>${item.label}<small>${item.model}</small></div>`;
+    el.addEventListener("click", () => { const v = state.view; addDevice(item, v.x + v.w / 2 - NODE_W / 2, v.y + v.h / 2 - NODE_H / 2); });
+    el.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/plain", JSON.stringify(item)));
+    $("tiles").appendChild(el);
+  }
+  const svg = $("canvas");
+  svg.addEventListener("dragover", (e) => e.preventDefault());
+  svg.addEventListener("drop", (e) => {
+    e.preventDefault();
+    const item = JSON.parse(e.dataTransfer.getData("text/plain") || "null"); if (!item) return;
+    const p = toWorld(e); addDevice(item, p.x - NODE_W / 2, p.y - NODE_H / 2);
+  });
+}
+async function addDevice(item, x, y) {
+  const name = await act(() => rpc("addDevice", [item.type, item.model, Math.round(x), Math.round(y)]));
+  if (name) { await refresh(); inspect(name); }
+}
+
+// ---------------------------------------------------------------- inspector + console
+async function inspect(name, keepTerm) {
+  const prev = state.sel; state.sel = name; render();
+  const head = $("inspHead"), ports = $("ports"), input = $("termInput");
+  if (!name) { head.innerHTML = '<div class="placeholder">Select a device</div>'; ports.innerHTML = ""; input.disabled = true; return; }
+  const d = devByName(name); if (!d) return inspect(null);
+  head.innerHTML = `<h2></h2><div class="sub"></div>`;
+  head.querySelector("h2").textContent = d.name;
+  head.querySelector(".sub").textContent = `${d.model} · ${d.ports.length} ports${d.power === false ? " · powered off" : ""}`;
+  ports.innerHTML = "";
+  for (const p of d.ports) {
+    const row = document.createElement("div"); row.className = "port";
+    const ip = p.ip && p.ip !== "0.0.0.0" ? `${p.ip}` : "";
+    row.innerHTML = `<span class="dot ${p.up ? "on" : ""}"></span><span></span><span class="ip"></span>`;
+    row.children[1].textContent = shortPort(p.name);
+    row.children[2].textContent = ip;
+    if (!p.linked) {
+      const b = document.createElement("button"); b.textContent = "connect";
+      b.onclick = () => beginLink(d.name, p.name);
+      row.children[2].replaceWith(b);
+    }
+    ports.appendChild(row);
+  }
+  const hasConsole = CONSOLE_TYPES.has(d.type);
+  input.disabled = !hasConsole;
+  input.placeholder = hasConsole ? `${d.name} console — type an IOS command` : "No IOS console for this device";
+  if (prev !== name && !keepTerm) {
+    $("term").textContent = "";
+    if (hasConsole) act(async () => { await rpc("watchTerm", [name]); const pr = await rpc("prompt", [name]); termWrite(pr.prompt || ""); });
+  }
+}
+function termWrite(s) { const t = $("term"); t.textContent += s; t.scrollTop = t.scrollHeight; }
+const hist = []; let hIdx = 0;
+$("termForm").addEventListener("submit", (e) => {
+  e.preventDefault(); const inp = $("termInput"), cmd = inp.value; inp.value = "";
+  if (cmd) { hist.push(cmd); hIdx = hist.length; }
+  if (state.sel) act(() => rpc("cli", [state.sel, cmd]));
+});
+$("termInput").addEventListener("keydown", (e) => {
+  if (e.key === "ArrowUp" && hIdx > 0) { e.preventDefault(); e.target.value = hist[--hIdx]; }
+  if (e.key === "ArrowDown") { e.preventDefault(); hIdx = Math.min(hist.length, hIdx + 1); e.target.value = hist[hIdx] || ""; }
+});
+
+// link mode: pick a free port, then a target device, then its port
+function beginLink(device, port) {
+  state.linkFrom = { device, port };
+  const b = $("banner"); b.style.display = "block"; b.textContent = `Connect ${device} ${shortPort(port)} → click the other device (Esc to cancel)`;
+}
+function cancelLink() { state.linkFrom = null; $("banner").style.display = "none"; }
+function pickLinkTarget(name) {
+  const from = state.linkFrom, d = devByName(name);
+  if (!d || name === from.device) return;
+  const free = d.ports.filter((p) => !p.linked);
+  if (!free.length) return toast(`${name} has no free ports`);
+  $("banner").textContent = `Connect ${from.device} ${shortPort(from.port)} → pick a port on ${name}`;
+  const ports = $("ports"); ports.innerHTML = "";
+  $("inspHead").innerHTML = `<h2></h2><div class="sub">choose a port</div>`; $("inspHead").querySelector("h2").textContent = name;
+  for (const p of free) {
+    const row = document.createElement("div"); row.className = "port";
+    row.innerHTML = `<span class="dot"></span><span></span>`; row.children[1].textContent = shortPort(p.name);
+    const b = document.createElement("button"); b.textContent = "use"; row.appendChild(b);
+    b.onclick = async () => { cancelLink(); await act(() => rpc("link", [from.device, from.port, name, p.name, "auto"])); await refresh(); inspect(from.device); };
+    ports.appendChild(row);
+  }
+}
+
+// ---------------------------------------------------------------- commands
+const COMMANDS = () => [
+  ...PALETTE.map((p) => ({ name: `Add ${p.label} ${p.model}`, run: () => { const v = state.view; addDevice(p, v.x + v.w / 2, v.y + v.h / 2); } })),
+  { name: state.ptVisible ? "Hide Packet Tracer window" : "Show Packet Tracer window", run: togglePT },
+  { name: "Refresh topology", run: refresh },
+  { name: "Fit topology to screen", run: () => { fitView(); render(); } },
+  ...(state.sel ? [{ name: `Delete ${state.sel}`, run: deleteSelected }] : []),
+];
+let cmdItems = [], cmdIdx = 0;
+function openCmdk() { $("cmdk").style.display = "grid"; $("cmdkInput").value = ""; filterCmdk(); $("cmdkInput").focus(); }
+function closeCmdk() { $("cmdk").style.display = "none"; }
+function filterCmdk() {
+  const q = $("cmdkInput").value.toLowerCase();
+  cmdItems = COMMANDS().filter((c) => q.split(/\s+/).every((w) => c.name.toLowerCase().includes(w))); cmdIdx = 0; drawCmdk();
+}
+function drawCmdk() {
+  const ul = $("cmdkList"); ul.innerHTML = "";
+  cmdItems.forEach((c, i) => { const li = document.createElement("li"); li.textContent = c.name; if (i === cmdIdx) li.className = "active";
+    li.onclick = () => { closeCmdk(); c.run(); }; ul.appendChild(li); });
+}
+$("cmdkInput").addEventListener("input", filterCmdk);
+$("cmdkInput").addEventListener("keydown", (e) => {
+  if (e.key === "ArrowDown") { cmdIdx = Math.min(cmdItems.length - 1, cmdIdx + 1); drawCmdk(); e.preventDefault(); }
+  if (e.key === "ArrowUp") { cmdIdx = Math.max(0, cmdIdx - 1); drawCmdk(); e.preventDefault(); }
+  if (e.key === "Enter" && cmdItems[cmdIdx]) { const c = cmdItems[cmdIdx]; closeCmdk(); c.run(); }
+  if (e.key === "Escape") closeCmdk();
+});
+$("cmdk").addEventListener("pointerdown", (e) => { if (e.target.id === "cmdk") closeCmdk(); });
+
+async function togglePT() {
+  const next = !state.ptVisible;
+  if (await act(() => rpc(next ? "show" : "hide")) !== undefined) { state.ptVisible = next; $("btnPT").textContent = next ? "Hide PT" : "Show PT"; }
+}
+async function deleteSelected() {
+  if (!state.sel || !confirm(`Delete ${state.sel} from the Packet Tracer workspace?`)) return;
+  const n = state.sel; await act(() => rpc("removeDevice", [n])); inspect(null); refresh();
+}
+
+addEventListener("keydown", (e) => {
+  const typing = e.target.tagName === "INPUT";
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openCmdk(); }
+  else if (e.key === "Escape") { cancelLink(); closeCmdk(); }
+  else if (!typing && (e.key === "Delete" || e.key === "Backspace")) deleteSelected();
+  else if (!typing && e.key.toLowerCase() === "r") refresh();
+  else if (!typing && e.key.toLowerCase() === "f") { fitView(); render(); }
+});
+$("btnRefresh").onclick = refresh;
+$("btnPT").onclick = togglePT;
+$("btnCmd").onclick = openCmdk;
+addEventListener("resize", () => { if (!state.view) return; if (state.userView) applyView(); else fitView(); });
+
+buildPalette();
+connectEvents();
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "recpt",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cisco Packet Tracer's engine with a modern UI and CLI",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "bin": { "pt": "cli/pt.mjs", "ptd": "daemon/ptd.mjs" },
+  "scripts": {
+    "daemon": "node daemon/ptd.mjs",
+    "check": "node --check daemon/ptd.mjs && node --check cli/pt.mjs && node --check agent/engine.js"
+  },
+  "license": "MIT"
+}

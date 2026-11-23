@@ -1,0 +1,11 @@
+# runtime
+logs/
+*.log
+node_modules/
+.DS_Store
+
+# local dev link so PT's #include "<repo>/ptbridge/agent/..." keeps resolving
+/ptbridge
+
+# java research build output
+research/ptmp-java/build/
