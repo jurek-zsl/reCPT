@@ -29,8 +29,9 @@ decryption.
 | ✅ Read live state | version, open file, `.pka` flag, 16 devices / 14 links, ports, IPs, up/down. About 0.1 s per CLI call. |
 | ✅ reCPT UI renders the real network | canvas, inspector with live port states, command palette (⌘K) |
 | ✅ Hide / show PT's window | queries keep working while PT is hidden |
-| ✅ Dev loop | edit `agent/engine.js`, then Stop/Start the module. PT re-reads it through `#include`. |
-| ⏳ Write operations | add/move/delete devices, cables, IOS console. Built, **not yet run against real PT**, because the only open file was a lab we must not modify. |
+| ✅ Dev loop | `npm run setup` copies `engine.js`. Restart PT (or Stop/Start the module) to load it. |
+| ✅ Write operations | add devices (incl. `ISR4331`), cables with automatic straight/cross choice, IOS console from the UI and CLI |
+| ✅ Install without absolute paths | loader `.pts` + `engine.js` in PT's user folder. reCPT autostarts about 8 s after PT launches. |
 | ⚠️ Activity score | PT refuses `getPercentageComplete()` without the activity's password |
 
 ### Things learned the hard way
@@ -44,23 +45,33 @@ decryption.
 ## Layout
 
 ```
-agent/engine.js    Script Engine (the module's main.js is just:  #include "<abs path>/agent/engine.js")
+agent/engine.js    the agent (installed to <PT user folder>/extensions/reCPT/engine.js)
+agent/loader.js    source of the loader baked into agent/reCPT.pts
+agent/reCPT.pts    loader Script Module (encrypted by PT; built once in PT's GUI)
 agent/bridge.htm   placeholder custom interface the web view loads
+setup/install.mjs  installer (npm run setup / --dry-run / --uninstall)
 daemon/ptd.mjs     daemon + serves the UI, zero dependencies (Node >= 20)
 ui/index.html      reCPT UI prototype (single file, no build)
 cli/pt.mjs         CLI
 research/ptmp-java/  PTMP probe + Apache Commons stand-ins (research only)
 ```
 
-## Setup (one time, inside Packet Tracer)
+## Setup
 
-1. **Create the module:** *Extensions → Scripting → New PT Script Module*.
-   - **General tab:** name `reCPT bridge`, ID `com.ptbridge.agent`, Startup **On Startup**.
-   - **Privileges:** Application, Activity, File Operations, Change User Interface, IPC, Get/Change Network Info, Simulation, Miscellaneous UI.
-   - **Script Engine tab:** file `main.js` containing `#include "/abs/path/ptbridge/agent/engine.js"`.
-   - **Custom Interfaces tab:** file `bridge.htm` containing `#include "/abs/path/ptbridge/agent/bridge.htm"`.
-2. **Export it:** *Info → Export*. Save it as `reCPT.pts` in `~/Cisco Packet Tracer 9.0.1/extensions`, answer **No** to "expand includes", then **Yes** to "add as persistent module".
-3. **Start it:** *Extensions → Scripting → Configure PT Script Modules → reCPT bridge → Launch*. From then on it starts with PT.
+```bash
+npm run setup        # copies agent/engine.js + agent/reCPT.pts into PT's user folder
+```
+
+**First time only**, because PT does not auto-detect modules in the user folder:
+
+1. *Extensions → Scripting → Configure PT Script Modules → **Add*** and pick `~/Cisco Packet Tracer <ver>/extensions/reCPT/reCPT.pts`.
+2. Select **reCPT → Edit → General**:
+   - set Startup to **On Startup**;
+   - tick the privileges: Application, Activity, File Operations, Change UI, IPC, Get/Change Network Info, Simulation, Misc UI;
+   - go to **Info → Export** and save over the same file.
+
+   (A `.pts` added this way arrives Disabled with no privileges. See docs/setup-automation.md.)
+3. Click **Start**. From now on reCPT starts with PT, and updates are just `npm run setup`.
 
 ## Run
 

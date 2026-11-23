@@ -223,9 +223,15 @@ var ptb = {
   rename: function (name, newName) { dev(name).setName(newName); return newName; },
   move: function (name, x, y) { dev(name).moveToLocation(x, y); return true; },
 
+  // type: a CABLE_TYPES name, a ConnectType number, or "auto" (PT's AUTO value is rejected
+  // by createLink, so we pick the cable PT's own auto-connect tool would).
   link: function (d1, p1, d2, p2, type) {
-    var t = typeof type === "number" ? type : CABLE_TYPES[String(type || "auto").toLowerCase()];
-    return lw().createLink(d1, p1, d2, p2, t);
+    var name = String(type || "auto").toLowerCase();
+    var t = typeof type === "number" ? type : (name === "auto" ? autoCable(d1, p1, d2, p2) : CABLE_TYPES[name]);
+    if (t === undefined) throw new Error("unknown cable type " + type);
+    var ok = lw().createLink(d1, p1, d2, p2, t);
+    if (!ok) throw new Error("PT refused the link (port busy, wrong cable or wrong port name?)");
+    return true;
   },
   unlink: function (d, p) { lw().deleteLink(d, p); return true; },
 
@@ -279,6 +285,17 @@ var ptb = {
     return f.getInstruction(i || 0);
   }
 };
+
+// Switch-like devices are "MDI-X"; hosts/routers are "MDI". Same side -> crossover.
+var SWITCH_LIKE = { 1: 1, 3: 1, 4: 1, 5: 1, 7: 1, 16: 1, 17: 1 };
+function autoCable(d1, p1, d2, p2) {
+  var a = String(p1), b = String(p2);
+  if (/serial/i.test(a) && /serial/i.test(b)) return CABLE_TYPES.serial;
+  if (/console|rs ?232/i.test(a) || /console|rs ?232/i.test(b)) return CABLE_TYPES.console;
+  if (/fiber|^Fi|SFP/i.test(a) && /fiber|^Fi|SFP/i.test(b)) return CABLE_TYPES.fiber;
+  var s1 = !!SWITCH_LIKE[dev(d1).getType()], s2 = !!SWITCH_LIKE[dev(d2).getType()];
+  return s1 === s2 ? CABLE_TYPES.cross : CABLE_TYPES.straight;
+}
 
 function unwatchTerm(name) {
   var w = PTB.watched[name];

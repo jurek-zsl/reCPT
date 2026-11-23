@@ -30,14 +30,29 @@ var __root = ipc.appWindow().getUserFolder() + "/extensions/reCPT/";
 - **No absolute paths** are baked in, so the same `.pts` works for every user and OS.
 - **It needs the File Operations privilege**, which the module already requests.
 
-## Open questions (need a PT restart to test)
+## Test results (PT 9.0.1, macOS)
 
-1. Does PT 9 **auto-detect** a `.pts` dropped into `<user folder>/extensions/`? The docs say PT Script Modules are "added by the user (or auto-detected during PT launch)". If it doesn't, there are fallbacks:
-   - Find where PT stores the module list (`PT.conf` looks encoded) and whether it can be written safely.
-   - As a last resort, a one-time guided step in the reCPT UI ("click Launch once").
+| Question | Result |
+|---|---|
+| Loader `.pts` + `engine.js` on disk | ✅ Works. The agent connects about 1 s after Start. |
+| Auto-detect `extensions/reCPT.pts` | ❌ Not detected |
+| Auto-detect `extensions/reCPT/reCPT.pts` (built-in layout) | ❌ Not detected. PT only auto-detects modules in its app bundle, which we must not modify. |
+| Open `.pts` by double-click / `open` | ❌ `.pts` isn't a document type PT opens |
+| Add via *Configure → Add* | ✅ Works, but the module arrives **Disabled with no privileges**. It has to be edited (On Startup + privileges) and re-exported once. |
+| Persists across PT restarts | ✅ Starts by itself; the agent connects about 8 s after PT launches |
+| `engine.js` update without touching PT | ✅ `npm run setup`, then restart PT |
+| Clicking PT's radios/checkboxes through accessibility | ⚠️ The UI changes but PT doesn't save it. Only real clicks stick. Relevant if we ever script the first-time step. |
+
+**Conclusion:** everything is automated except one first-time step inside PT (Add + Edit + Export,
+about 1 minute). Next options to remove it:
+1. Find out why an added `.pts` comes in without privileges. Maybe they need a publisher signature (PT supports `.p12` signing), and signed modules might be auto-accepted.
+2. A guided "first-run" screen in the reCPT UI that walks the user through those clicks.
+
+## Open questions
+
+1. Do signed modules (`.p12` publisher signing) keep their privileges and startup mode when added?
 2. Does `getUserFolder()` return `~/Cisco Packet Tracer 9.0.1`, the same on all three OSes?
-3. Is "On Startup" kept for an auto-detected module, or does PT ask the user to confirm its privileges first? If it asks, the installer shows the user what to expect.
-4. Windows/Linux: is the same web view + WebSocket transport allowed? It's expected to be, because it's the same QtWebEngine.
+3. Windows/Linux: is the same web view + WebSocket transport allowed? It's expected to be, because it's the same QtWebEngine.
 
 ## Release shape
 
